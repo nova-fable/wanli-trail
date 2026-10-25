@@ -1,6 +1,14 @@
+<!--
+  @file 长征精神结语页：五大精神 / 数说长征 / 七律 / 宣言书论断
+  职责：播放自然到达终点或顶栏按钮进入；提供再走一遍/自由探索/返回沙盘三个去向。
+  注：SPIRITS/NUMBERS/POEM 为史实内容，与 docs/spirit/finale.md 同源，不键化。
+-->
 <script setup>
 // 长征精神结语页：演示终点的精神升华
 import { restart, startExplore, closePanel } from '../composables/usePlayback'
+import { useI18n } from '../core/i18n'
+
+const { t } = useI18n()
 
 const SPIRITS = [
   ['坚定信念', '把全国人民和中华民族的根本利益看得高于一切，坚定革命的理想和信念，坚信正义事业必然胜利。'],
@@ -44,8 +52,8 @@ function explore() {
   <div class="finale-overlay">
     <div class="finale-scroll">
       <div class="finale-star">★</div>
-      <h1 class="finale-title">长征精神</h1>
-      <p class="finale-sub">伟大长征精神，是中国共产党人红色基因和精神族谱的重要组成部分</p>
+      <h1 class="finale-title">{{ t('finale.title') }}</h1>
+      <p class="finale-sub">{{ t('finale.sub') }}</p>
 
       <div class="finale-spirits">
         <div v-for="(s, i) in SPIRITS" :key="i" class="spirit-item">
@@ -62,7 +70,7 @@ function explore() {
       </div>
 
       <div class="finale-poem">
-        <div class="poem-title">《七律 · 长征》 <span>毛泽东 · 一九三五年十月</span></div>
+        <div class="poem-title">{{ t('finale.poemTitle') }} <span>{{ t('finale.poemAuthor') }}</span></div>
         <p v-for="(l, i) in POEM" :key="i">{{ l }}</p>
       </div>
 
@@ -72,9 +80,9 @@ function explore() {
       </p>
 
       <div class="finale-actions">
-        <button class="btn-tour" @click="again">↻ 再走一遍长征路</button>
+        <button class="btn-tour" @click="again">{{ t('finale.again') }}</button>
         <button class="btn-explore" @click="explore">自由探索</button>
-        <button class="btn-explore" @click="emit('close')">返回沙盘</button>
+        <button class="btn-explore" @click="emit('close')">{{ t('finale.back') }}</button>
       </div>
     </div>
   </div>

@@ -1,3 +1,8 @@
+<!--
+  @file 左上图例面板：部队显隐 / 兵力消长 / 战场态势开关 / 标记显隐设置
+  职责：汇总四军状态与态势计数（与地图同用 endOfDay 时间窗语义）；
+  所有开关直写 useLayers/usePlayback 状态，由 SandboxMap 的 watch 消费。
+-->
 <script setup>
 import { computed } from 'vue'
 import { ARMIES } from '../data/armies'
@@ -13,15 +18,19 @@ import {
 } from '../composables/useLayers'
 import { playback } from '../composables/usePlayback'
 import { legendCollapsed } from '../composables/usePrefs'
+import { useI18n } from '../core/i18n'
+import { MARKER_MODE } from '../core/enums'
+
+const { t } = useI18n()
 import { parseDate, endOfDay } from '../utils/geo'
 
 const collapsed = legendCollapsed
 
 function statusText(a) {
   const s = armyState[a.key]
-  if (!s.started) return '待出发'
-  if (s.done) return '✓ 已到达'
-  return `行军中 ${s.pct}%`
+  if (!s.started) return t('legend.status.idle')
+  if (s.done) return t('legend.status.done')
+  return t('legend.status.marching', { pct: s.pct })
 }
 
 // 当前时间点上各态势层活跃实体数（与地图显隐同用 endOfDay 语义，保证计数一致）
@@ -37,43 +46,19 @@ const counts = computed(() => {
   }
 })
 
+// 态势条目元数据：文案走词典（随语言重算）；color 是视觉域常量
 const SITUATION_ITEMS = [
-  {
-    key: 'zones',
-    name: '红军根据地驻扎',
-    sub: '六大苏区存续演变',
-    color: '#c62828',
-    tip: '红军各根据地的时间窗显示：出发即失去、会师即获得',
-  },
-  {
-    key: 'kmt',
-    name: '国民党军围堵',
-    sub: '封锁线 · 追剿 · 驻防',
-    color: '#546e7a',
-    tip: '四道封锁线与湘、粤、桂、黔、川、滇、中央军、东北军部署',
-  },
-  {
-    key: 'japan',
-    name: '日军威胁',
-    sub: '民族危机 · 北上抗日',
-    color: '#8e2020',
-    tip: '九一八、华北事变、绥远抗战——长征"北上抗日"的时代背景',
-  },
-  {
-    key: 'stories',
-    name: '精神印记',
-    sub: '半条被子 · 金色鱼钩 · 丰碑',
-    color: '#d4a94e',
-    tip: '长征路上体现不怕牺牲、患难与共、鱼水情深的故事，点击地图书签阅读',
-  },
-  {
-    key: 'rivers',
-    name: '江河要津',
-    sub: '湘江 · 乌江 · 赤水 · 金沙江 · 大渡河',
-    color: '#2f7fbf',
-    tip: '长征渡过的十条大江大河（简化示意走线）——一条大河就是一道雄关',
-  },
-]
+  { key: 'zones', color: '#c62828' },
+  { key: 'kmt', color: '#546e7a' },
+  { key: 'japan', color: '#8e2020' },
+  { key: 'stories', color: '#d4a94e' },
+  { key: 'rivers', color: '#2f7fbf' },
+].map((it) => ({
+  ...it,
+  name: t(`legend.item.${it.key}.name`),
+  sub: t(`legend.item.${it.key}.sub`),
+  tip: t(`legend.item.${it.key}.tip`),
+}))
 
 // 兵力消长
 const strengths = computed(() => {
@@ -89,7 +74,7 @@ const strengths = computed(() => {
 
 <template>
   <div class="army-legend">
-    <h4 class="lg-head" title="点击折叠/展开图例" @click="collapsed = !collapsed">
+    <h4 class="lg-head" :title="t('legend.fold')" @click="collapsed = !collapsed">
       红军部队
       <span class="lg-fold">{{ collapsed ? '▸' : '▾' }}</span>
     </h4>
@@ -99,7 +84,7 @@ const strengths = computed(() => {
       :key="a.key"
       class="army-item"
       :class="{ off: !armyVisible[a.key] }"
-      :title="armyVisible[a.key] ? '点击隐藏该部队路线' : '点击显示该部队路线'"
+      :title="armyVisible[a.key] ? t('legend.hideTip') : t('legend.showTip')"
       @click="toggleArmy(a.key)"
     >
       <span class="swatch" :style="{ background: a.color }"></span>
@@ -110,11 +95,11 @@ const strengths = computed(() => {
       <span class="a-status">{{ statusText(a) }}</span>
     </button>
 
-    <h4 class="lg-sec">红军兵力</h4>
+    <h4 class="lg-sec">{{ t('legend.strength') }}</h4>
     <div class="str-box">
       <div class="str-total">
         <span class="str-num">{{ strengths.totalText }}</span>
-        <span class="str-sub">出发 {{ STRENGTH_TOTAL.start }} → 到达 {{ STRENGTH_TOTAL.end }}</span>
+        <span class="str-sub">{{ t('legend.strengthRange', { from: STRENGTH_TOTAL.start, to: STRENGTH_TOTAL.end }) }}</span>
       </div>
       <div v-for="r in strengths.rows" :key="r.army.key" class="str-row">
         <span class="str-name" :style="{ color: r.army.color }">{{ r.army.short }}</span>
@@ -125,7 +110,7 @@ const strengths = computed(() => {
       </div>
     </div>
 
-    <h4 class="lg-sec">战场态势</h4>
+    <h4 class="lg-sec">{{ t('legend.situation') }}</h4>
     <button
       v-for="s in SITUATION_ITEMS"
       :key="s.key"
@@ -139,20 +124,20 @@ const strengths = computed(() => {
         <span class="a-name">{{ s.name }}</span>
         <span class="a-sub">{{ s.sub }}</span>
       </span>
-      <span class="a-status">{{ counts[s.key] }} 处</span>
+      <span class="a-status">{{ t('legend.count', { n: counts[s.key] }) }}</span>
     </button>
 
-    <h4 class="lg-sec">显示设置</h4>
-    <div class="mode-seg" title="事件图标的展示方式">
-      <button :class="{ on: playback.markerMode === 'march' }" @click="playback.markerMode = 'march'">
-        随行军浮现
+    <h4 class="lg-sec">{{ t('legend.display') }}</h4>
+    <div class="mode-seg" :title="t('legend.displayTip')">
+      <button :class="{ on: playback.markerMode === MARKER_MODE.MARCH }" @click="playback.markerMode = MARKER_MODE.MARCH">
+        {{ t('legend.mode.march') }}
       </button>
-      <button :class="{ on: playback.markerMode === 'all' }" @click="playback.markerMode = 'all'">
-        全部常显
+      <button :class="{ on: playback.markerMode === MARKER_MODE.ALL }" @click="playback.markerMode = MARKER_MODE.ALL">
+        {{ t('legend.mode.all') }}
       </button>
     </div>
     <div class="mode-note">
-      {{ playback.markerMode === 'march' ? '行军中隐藏未抵达的图标，小红军走过即浮现' : '全部图标常显，未发生的淡化展示' }}
+      {{ t(playback.markerMode === MARKER_MODE.MARCH ? 'legend.modeNote.march' : 'legend.modeNote.all') }}
     </div>
     </div>
   </div>

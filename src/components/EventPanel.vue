@@ -1,9 +1,17 @@
+<!--
+  @file 事件讲解卡：自动暂停或手动点击时的单事件详情
+  职责：类型徽记/时间地点人物/讲解词/继续前进（跳转到该事件日期再播放）/上下翻页。
+  数据来源：playback.panelEvent + EVENTS 检索。
+-->
 <script setup>
 import { computed } from 'vue'
 import { playback, closePanel, play, openEvent, seek } from '../composables/usePlayback'
 import { EVENTS, EVENT_TYPES, DEPARTURE_DATE } from '../data/events'
 import { ARMIES } from '../data/armies'
 import { parseDate, DAY_MS } from '../utils/geo'
+import { useI18n } from '../core/i18n'
+
+const { t } = useI18n()
 
 const ev = computed(() => playback.panelEvent)
 const typeMeta = computed(() => (ev.value ? EVENT_TYPES[ev.value.type] : null))
@@ -12,7 +20,7 @@ const idx = computed(() => (ev.value ? EVENTS.findIndex((e) => e.id === ev.value
 const dayText = computed(() => {
   if (!ev.value) return ''
   const n = Math.floor((parseDate(ev.value.date) - parseDate(DEPARTURE_DATE)) / DAY_MS) + 1
-  return n > 0 ? `长征第 ${n} 天` : '长征前夕'
+  return n > 0 ? t('ep.day', { n }) : t('ep.day.pre')
 })
 
 const armyChip = computed(() => {
@@ -44,15 +52,15 @@ function continueFromEvent() {
       <span class="ep-type" :style="{ background: typeMeta.color }">
         {{ typeMeta.mark }} {{ typeMeta.label }}
       </span>
-      <button class="ep-close" title="关闭" @click="closePanel">✕</button>
+      <button class="ep-close" :title="t('ep.close')" @click="closePanel">✕</button>
     </div>
 
     <h3 class="ep-name">{{ ev.name }}</h3>
 
     <div class="ep-meta">
-      <span><i class="ep-k">时</i><b>{{ ev.dateLabel }}</b></span>
-      <span v-if="dayText" class="ep-day"><i class="ep-k">程</i>{{ dayText }}</span>
-      <span><i class="ep-k">地</i>{{ ev.place }}</span>
+      <span><i class="ep-k">{{ t('ep.k.date') }}</i><b>{{ ev.dateLabel }}</b></span>
+      <span v-if="dayText" class="ep-day"><i class="ep-k">{{ t('ep.k.day') }}</i>{{ dayText }}</span>
+      <span><i class="ep-k">{{ t('ep.k.place') }}</i>{{ ev.place }}</span>
       <span v-if="armyChip" class="ep-army">
         <i class="dot" :style="{ background: armyChip.color }"></i>{{ armyChip.name }}
       </span>
@@ -67,14 +75,14 @@ function continueFromEvent() {
     <p class="ep-desc">{{ ev.desc }}</p>
 
     <div v-if="showContinue || showPlayFromHere" class="ep-actions">
-      <button v-if="showContinue" class="btn-primary" @click="play()">继续前进 ▸▸</button>
-      <button v-else class="btn-primary" @click="continueFromEvent">▶ 从此处继续</button>
+      <button v-if="showContinue" class="btn-primary" @click="play()">{{ t('ep.continue') }}</button>
+      <button v-else class="btn-primary" @click="continueFromEvent">{{ t('ep.playFrom') }}</button>
     </div>
 
     <div class="ep-nav">
       <button :disabled="idx <= 0" @click="go(-1)">◂ 上一事件</button>
       <span class="pos">{{ idx + 1 }} / {{ EVENTS.length }}</span>
-      <button :disabled="idx >= EVENTS.length - 1" @click="go(1)">下一事件 ▸</button>
+      <button :disabled="idx >= EVENTS.length - 1" @click="go(1)">{{ t('ep.next') }}</button>
     </div>
   </div>
 </template>

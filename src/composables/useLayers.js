@@ -1,3 +1,10 @@
+/**
+ * @file 图层显隐与四军实时状态（单例）
+ *
+ * 职责：armyVisible/situationVisible 响应式开关（图例与地图共用）；
+ * preparedRoutes 预处理路线（样条加密 + 时间戳 + 里程，模块级一次性计算）；
+ * armyState 由 SandboxMap.render 每帧写入（ArmyLegend 只读）。
+ */
 import { reactive } from 'vue'
 import { ARMIES } from '../data/armies'
 import { prepareRoute } from '../utils/geo'

@@ -1,3 +1,6 @@
+<!--
+  @file 环境氛围层：过雪山飘雪、过草地流雾（纯 CSS 动画，时间窗驱动）
+-->
 <script setup>
 // 雪山 / 草地 环境氛围：过雪山飘雪、过草地流雾
 import { computed } from 'vue'

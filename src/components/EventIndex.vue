@@ -1,14 +1,22 @@
+<!--
+  @file 事件总览索引面板：50 个事件的可筛选清单
+  职责：按部队筛选、已发生着色、当前项高亮；点击条目 → seek 到该日期并讲解。
+  数据来源：EVENTS + playback.time（着色与"当前项"判定）。
+-->
 <script setup>
 import { computed, ref } from 'vue'
 import { EVENTS, EVENT_TYPES } from '../data/events'
 import { ARMIES } from '../data/armies'
 import { playback, openEvent, seek } from '../composables/usePlayback'
 import { parseDate } from '../utils/geo'
+import { useI18n } from '../core/i18n'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['close'])
 
 const FILTERS = [
-  { key: 'all', name: '全部' },
+  { key: 'all', name: t('ei.filter.all') },
   ...ARMIES.map((a) => ({ key: a.key, name: a.short, color: a.color })),
 ]
 const filter = ref('all')
@@ -41,7 +49,7 @@ function jump(ev) {
 <template>
   <div class="event-index" :class="{ shifted: !!playback.panelEvent }">
     <div class="fp-head">
-      <h4>❖ 事件总览</h4>
+      <h4>{{ t('ei.title') }}</h4>
       <button class="ep-close" title="关闭" @click="emit('close')">✕</button>
     </div>
     <div class="ei-filters">
@@ -60,7 +68,7 @@ function jump(ev) {
         :key="r.ev.id"
         class="ei-item"
         :class="{ future: !r.past, now: r.current }"
-        :title="`点击跳转：${r.ev.name}`"
+        :title="t('ei.itemTip', { name: r.ev.name })"
         @click="jump(r.ev)"
       >
         <span class="ei-dot" :style="{ background: EVENT_TYPES[r.ev.type].color }"></span>

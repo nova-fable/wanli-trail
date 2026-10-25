@@ -1,3 +1,10 @@
+<!--
+  @file 时间轴组件：全宽档案时间带
+  职责：播放/暂停/倍速/连播；月份-年份刻度尺 + 双色事件点 + 播放头日期气泡 +
+  悬停预览（事件卡/轨道日期）；拖动轨道回溯（pointer 事件 + pointercancel 兜底）。
+  数据来源：playback（时间/倍速）、EVENTS（事件刻度位置）。
+  写路径：seekRatio/play/setSpeed/openEvent（usePlayback）。
+-->
 <script setup>
 import { computed, ref, onBeforeUnmount } from 'vue'
 import {
@@ -13,6 +20,9 @@ import {
 } from '../composables/usePlayback'
 import { EVENTS, EVENT_TYPES } from '../data/events'
 import { parseDate, formatCnDate } from '../utils/geo'
+import { useI18n } from '../core/i18n'
+
+const { t } = useI18n()
 
 const speeds = [0.5, 1, 2, 4]
 
@@ -123,7 +133,7 @@ onBeforeUnmount(() => {
     <div class="tl-top">
       <button
         class="tl-play"
-        :title="playback.playing ? '暂停' : playback.finished ? '重新播放' : '播放'"
+        :title="playback.playing ? t('tip.pause') : playback.finished ? t('tip.replayFinished') : t('tip.play')"
         @click="toggle"
       >
         <span v-if="playback.playing">❚❚</span>
@@ -141,11 +151,11 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <button class="tl-continuous" title="回到 1934 年 10 月，自动播放到大会师（不逐事件暂停）" @click="playThrough">
+      <button class="tl-continuous" :title="t('tip.continuous')" @click="playThrough">
         ⏭ 连播
       </button>
 
-      <div class="tl-hint">点击刻度跳转事件 · 拖动轨道回溯</div>
+      <div class="tl-hint">{{ t('tl.hint') }}</div>
 
       <div class="tl-date">
         <div class="date-main">{{ dateText }}</div>

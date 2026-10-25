@@ -1,3 +1,7 @@
+<!--
+  @file 字幕条：阶段叙述 + 诗词金句（第二声道）
+  数据来源：phases.js / quotes.js（时间窗 find，endOfDay 语义）。
+-->
 <script setup>
 import { computed } from 'vue'
 import { playback } from '../composables/usePlayback'

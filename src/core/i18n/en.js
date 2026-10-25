@@ -32,6 +32,10 @@ export default {
     'The camera follows the troops by default; drag the map to take over',
     'Space play/pause · ← → jump 7 days · Esc close panels',
   ],
+  'intro.stat.armies': 'armies on the march',
+  'intro.stat.events': 'key events',
+  'intro.stat.provinces': 'provinces crossed',
+  'intro.stat.days': 'days of the march',
   'intro.note': 'Four routes · {n} key events · coordinates are approximate, for demonstration only',
 
   // ===== Legend =====

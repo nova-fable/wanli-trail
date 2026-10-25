@@ -34,6 +34,10 @@ export default {
     '镜头默认跟随部队行军，拖动地图即可随时接管视角',
     '空格 播放/暂停 · ← → 前后七天 · Esc 关闭浮层',
   ],
+  'intro.stat.armies': '路红军并肩长征',
+  'intro.stat.events': '个关键事件',
+  'intro.stat.provinces': '省纵横转战',
+  'intro.stat.days': '个昼夜征程',
   'intro.note': '四路红军 · {n} 个关键事件 · 坐标为近似考证值，仅供演示',
 
   // ===== 图例面板 =====

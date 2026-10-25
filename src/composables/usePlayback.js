@@ -1,12 +1,21 @@
+/**
+ * @file 播放引擎（应用核心单例）
+ *
+ * 职责：时间域 1934-10-01 → 1936-10-31 的推进、倍速、事件跨越检测与讲解暂停。
+ * 数据来源：EVENTS（按日期升序）。
+ * 写路径：playback 响应式单例（时间/播放态/面板事件/markerMode 等），
+ * SandboxMap/TimelineBar/EventPanel 等全部消费方只读或经导出函数写。
+ *
+ * 驱动：setInterval（遮挡环境可用）+ tick dt 限幅/跳帧（后台强化节流防护）。
+ */
 import { reactive, markRaw } from 'vue'
 import { EVENTS } from '../data/events'
 import { parseDate, clamp, DAY_MS } from '../utils/geo'
+import { PLAYBACK } from '../core/constants/map'
+import { MARKER_MODE } from '../core/enums'
 
 export const T_START = parseDate('1934-10-01')
 export const T_END = parseDate('1936-10-31')
-
-// 1x 速度：每秒推进 7 天
-const BASE_DAYS_PER_SEC = 7
 
 const sortedEvents = EVENTS // events.js 已按日期升序导出
 const evDate = (e) => parseDate(e.date)
@@ -22,7 +31,7 @@ export const playback = reactive({
   currentEvent: null, // 自动暂停所在的事件
   panelEvent: null, // 面板当前展示的事件（自动暂停或点击）
   lastEventArmy: 'first', // 最近跨过事件所属部队，镜头跟随依据
-  markerMode: 'march', // 标记显隐：march=随行军浮现（未抵达的事件隐藏）| all=全部常显
+  markerMode: MARKER_MODE.MARCH, // 标记显隐：随行军浮现（未抵达隐藏）| 全部常显，枚举见 core/enums
   basemap: 'amap',
   toast: '', // 轻提示（精神印记等）
 })
@@ -46,8 +55,6 @@ function syncEventPointer() {
 // 定时器驱动（而非 rAF）：窗口被遮挡/失焦时 rAF 会被系统暂停，定时器仍能推进。
 // 但后台标签会被强化节流（约 1 次/分钟），dt 会暴涨——大于 5s 视为"曾被挂起"：
 // 跳过该帧不推进（恢复后从原时间继续），其余帧限幅 2s，防止遮挡期间"时间飞跃"误触终点
-const MAX_DT_MS = 2000
-const SKIP_DT_MS = 5000
 function tick() {
   if (!playback.playing) {
     lastTs = null
@@ -57,9 +64,9 @@ function tick() {
   if (lastTs == null) lastTs = now
   const rawDt = now - lastTs
   lastTs = now
-  if (rawDt > SKIP_DT_MS) return
-  const dt = Math.min(rawDt, MAX_DT_MS)
-  const next = playback.time + (dt / 1000) * BASE_DAYS_PER_SEC * playback.speed * DAY_MS
+  if (rawDt > PLAYBACK.SKIP_DT_MS) return
+  const dt = Math.min(rawDt, PLAYBACK.MAX_DT_MS)
+  const next = playback.time + (dt / 1000) * PLAYBACK.DAYS_PER_SEC * playback.speed * DAY_MS
 
   if (playback.autoTour) {
     const ev = sortedEvents[nextEventIdx]
@@ -102,7 +109,7 @@ export function play() {
   playback.playing = true
   if (intervalId == null) {
     lastTs = null
-    intervalId = setInterval(tick, 50)
+    intervalId = setInterval(tick, PLAYBACK.TICK_MS)
   }
 }
 

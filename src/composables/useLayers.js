@@ -7,8 +7,8 @@ export const armyVisible = reactive(
   Object.fromEntries(ARMIES.map((a) => [a.key, true])),
 )
 
-// 战场态势层显隐：根据地 / 国民党军 / 日军威胁 / 精神印记
-export const situationVisible = reactive({ zones: true, kmt: true, japan: true, stories: true })
+// 战场态势层显隐：根据地 / 国民党军 / 日军威胁 / 精神印记 / 江河要津
+export const situationVisible = reactive({ zones: true, kmt: true, japan: true, stories: true, rivers: true })
 
 // 预处理后的路线（带时间戳与累计里程）
 export const preparedRoutes = Object.fromEntries(

@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { ARMIES } from '../data/armies'
 import { EVENTS, EVENT_TYPES } from '../data/events'
 import { ZONES, KMT_BLOCKADES, KMT_UNITS, JAPAN_CRISES } from '../data/situation'
+import { RIVERS } from '../data/rivers'
 import { STORIES } from '../data/stories'
 import { playback, openEvent, flashToast } from '../composables/usePlayback'
 import { BASEMAPS } from '../composables/useMapBase'
@@ -23,6 +24,7 @@ let tileLayer = null
 const layers = {} // armyKey -> { group, ghost, casing, traveled, flow, startDot, marker }
 const eventMarkers = []
 let lastPassedCount = -1
+let lastMarkerMode = null
 // 事件时间戳预解析（countPassed 二分查找用）
 const EVENT_TS = EVENTS.map((e) => parseDate(e.date))
 
@@ -102,6 +104,31 @@ function buildSituation() {
   situationLayers.zones = L.layerGroup().addTo(map)
   situationLayers.kmt = L.layerGroup().addTo(map)
   situationLayers.japan = L.layerGroup().addTo(map)
+  // 江河要津：静态地理层（无时间窗），青蓝双色衬底突出
+  situationLayers.rivers = L.layerGroup().addTo(map)
+  RIVERS.forEach((r) => {
+    const mid = r.pts[Math.floor(r.pts.length / 2)]
+    L.polyline(r.pts, {
+      color: '#2f7fbf',
+      weight: 5.5,
+      opacity: 0.22,
+      smoothFactor: 0.5,
+      interactive: false,
+    }).addTo(situationLayers.rivers)
+    const line = L.polyline(r.pts, {
+      color: '#2f7fbf',
+      weight: 2,
+      opacity: 0.8,
+      smoothFactor: 0.5,
+      interactive: true,
+    })
+    line.bindTooltip(`◈ ${r.name}`, { permanent: true, direction: 'center', className: 'river-label' })
+    line.bindPopup(
+      `<div class="war-pop"><div class="wp-side">江河要津</div><h5>${r.name}</h5><p>长征途中红军跋涉渡过的大江大河（简化示意走线）。湘江血战、乌江天险、四渡赤水、巧渡金沙江、强渡大渡河——一条大河就是一道雄关。</p></div>`,
+      { className: 'war-popup', maxWidth: 280 },
+    )
+    line.addTo(situationLayers.rivers)
+  })
 
   ZONES.forEach((z) => {
     const c = L.circle([z.lat, z.lng], {
@@ -384,6 +411,19 @@ function countPassed(t) {
   return lo
 }
 
+// 标记可见性：march 模式下未抵达的事件隐藏（小红军走过即浮现，行军先于识图），
+// all 模式沿用"未发生淡化"。讲解中的事件始终可见（flyTo 的落点）。
+function syncMarkerVisibility(passed) {
+  const march = playback.markerMode === 'march'
+  const panelId = playback.panelEvent?.id
+  EVENTS.forEach((ev, i) => {
+    const el = eventMarkers[i].getElement()?.querySelector('.ev-mark')
+    if (!el) return
+    el.classList.toggle('ev-future', !march && i >= passed)
+    el.classList.toggle('ev-hidden', march && i >= passed && ev.id !== panelId)
+  })
+}
+
 // ===== 已走折线增量维护 =====
 // 持久数组只追加/改队尾：跨过加密点或队尾偏移超过约 1km 时才重建 Leaflet 折线，
 // 消除每帧 4 军 × 3 线的全量 setLatLngs 与数组重分配
@@ -498,14 +538,12 @@ function render() {
     }
   }
 
-  // 事件标记 已发生/未发生 样式（仅在跨越数量变化时更新 DOM）
+  // 事件标记可见性（跨越计数或显隐模式变化时才动 DOM）
   const passed = countPassed(t)
-  if (passed !== lastPassedCount) {
-    EVENTS.forEach((ev, i) => {
-      const el = eventMarkers[i].getElement()?.querySelector('.ev-mark')
-      if (el) el.classList.toggle('ev-future', i >= passed)
-    })
+  if (passed !== lastPassedCount || playback.markerMode !== lastMarkerMode) {
+    syncMarkerVisibility(passed)
     lastPassedCount = passed
+    lastMarkerMode = playback.markerMode
   }
 
   // 镜头跟随：跟随最近跨过事件所属部队的标记
@@ -727,6 +765,8 @@ watch(
       const el = m.getElement()?.querySelector('.ev-mark')
       if (el) el.classList.toggle('ev-active', !!ev && EVENTS[i].id === ev?.id)
     })
+    // march 模式：讲解中的事件从隐藏态浮现，其余按当前进度重算
+    syncMarkerVisibility(countPassed(playback.time))
     if (ev) flyToEvent(ev)
   },
 )

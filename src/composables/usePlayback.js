@@ -22,6 +22,7 @@ export const playback = reactive({
   currentEvent: null, // 自动暂停所在的事件
   panelEvent: null, // 面板当前展示的事件（自动暂停或点击）
   lastEventArmy: 'first', // 最近跨过事件所属部队，镜头跟随依据
+  markerMode: 'march', // 标记显隐：march=随行军浮现（未抵达的事件隐藏）| all=全部常显
   basemap: 'amap',
   toast: '', // 轻提示（精神印记等）
 })
@@ -42,7 +43,11 @@ function syncEventPointer() {
   playback.lastEventArmy = army
 }
 
-// 定时器驱动（而非 rAF）：窗口被遮挡/失焦时 rAF 会被系统暂停，定时器仍能推进
+// 定时器驱动（而非 rAF）：窗口被遮挡/失焦时 rAF 会被系统暂停，定时器仍能推进。
+// 但后台标签会被强化节流（约 1 次/分钟），dt 会暴涨——大于 5s 视为"曾被挂起"：
+// 跳过该帧不推进（恢复后从原时间继续），其余帧限幅 2s，防止遮挡期间"时间飞跃"误触终点
+const MAX_DT_MS = 2000
+const SKIP_DT_MS = 5000
 function tick() {
   if (!playback.playing) {
     lastTs = null
@@ -50,8 +55,10 @@ function tick() {
   }
   const now = performance.now()
   if (lastTs == null) lastTs = now
-  const dt = now - lastTs
+  const rawDt = now - lastTs
   lastTs = now
+  if (rawDt > SKIP_DT_MS) return
+  const dt = Math.min(rawDt, MAX_DT_MS)
   const next = playback.time + (dt / 1000) * BASE_DAYS_PER_SEC * playback.speed * DAY_MS
 
   if (playback.autoTour) {

@@ -22,11 +22,12 @@ const showIndex = ref(false)
 const showHelp = ref(false)
 const showFinale = ref(false)
 
-// 演示模式播放到终点 → 弹出长征精神结语
+// 播放自然到达终点（演示讲解或连播）→ 弹出长征精神结语
+// finished 仅由 tick 置位，拖动/跳转不会误触
 watch(
   () => playback.finished,
   (v) => {
-    if (v && playback.autoTour && playback.started) showFinale.value = true
+    if (v && playback.started) showFinale.value = true
   },
 )
 

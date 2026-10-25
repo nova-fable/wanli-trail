@@ -4,6 +4,7 @@ import {
   playback,
   play,
   toggle,
+  seek,
   seekRatio,
   setSpeed,
   openEvent,
@@ -79,6 +80,13 @@ const hoverDate = computed(() =>
   hoverRatio.value >= 0 ? formatCnDate(T_START + hoverRatio.value * (T_END - T_START)) : '',
 )
 
+// 连播：回到 1934-10 从头自动播放到大会师（关闭逐事件暂停讲解）
+function playThrough() {
+  playback.autoTour = false
+  seek(T_START)
+  play()
+}
+
 function ratioOf(e) {
   const r = trackEl.value.getBoundingClientRect()
   return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
@@ -132,6 +140,10 @@ onBeforeUnmount(() => {
           {{ s }}×
         </button>
       </div>
+
+      <button class="tl-continuous" title="回到 1934 年 10 月，自动播放到大会师（不逐事件暂停）" @click="playThrough">
+        ⏭ 连播
+      </button>
 
       <div class="tl-hint">点击刻度跳转事件 · 拖动轨道回溯</div>
 

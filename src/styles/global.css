@@ -229,13 +229,20 @@ button {
 .ev-mark {
   cursor: pointer;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  transition: opacity 0.4s ease;
 }
 .ev-mark svg {
   display: block;
   overflow: visible;
-  transition: transform 0.12s;
+  transition: transform 0.3s ease;
   transform-origin: 50% 100%;
 }
+/* march 模式：未抵达的标记隐藏（走过时反向过渡浮现，尖端为原点自然"落"下） */
+.ev-mark.ev-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.ev-mark.ev-hidden svg { transform: scale(0.45); }
 .ev-mark .ev-plate {
   fill: var(--ec);
   fill-opacity: 0.52;
@@ -268,7 +275,6 @@ button {
 }
 .ev-mark:hover svg { transform: scale(1.24); }
 .ev-mark.ev-future { opacity: 0.4; }
-.ev-mark.ev-future svg { filter: grayscale(0.55); }
 .ev-mark.ev-active svg { animation: ev-pop 1s infinite alternate; }
 @keyframes ev-pop {
   from { transform: scale(1); }
@@ -393,6 +399,37 @@ button {
 .army-item .a-status { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
 .army-item.off { opacity: 0.4; }
 .army-item.off .swatch { background: #555 !important; }
+
+/* 标记显隐配置（随行军浮现 / 全部常显） */
+.mode-seg {
+  display: flex;
+  gap: 2px;
+  margin: 2px 2px 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 2px;
+}
+.mode-seg button {
+  flex: 1;
+  font-size: 11px;
+  padding: 3px 0;
+  border-radius: 6px;
+  color: var(--text-dim);
+  transition: all 0.15s;
+}
+.mode-seg button:hover { color: var(--text); }
+.mode-seg button.on {
+  background: rgba(212, 169, 78, 0.16);
+  color: var(--accent);
+}
+.mode-note {
+  font-size: 10px;
+  color: #6b7484;
+  letter-spacing: 0.5px;
+  line-height: 1.5;
+  padding: 0 4px 2px;
+}
 
 /* ===== 事件面板 ===== */
 .event-panel {
@@ -618,6 +655,25 @@ button {
 .tl-speed button.on {
   background: rgba(212, 169, 78, 0.16);
   color: var(--accent);
+}
+
+/* 连播：从头自动播放到大会师 */
+.tl-continuous {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  color: var(--text-dim);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tl-continuous:hover {
+  color: var(--accent);
+  border-color: rgba(212, 169, 78, 0.45);
+  background: rgba(212, 169, 78, 0.1);
 }
 
 .tl-hint {
@@ -1237,6 +1293,21 @@ button {
   55% { opacity: 0.75; }
   100% { opacity: 0; transform: scale(1.28); }
 }
+
+/* 江河要津：河名标签（青蓝小字斜体，融入羊皮纸） */
+.leaflet-tooltip.river-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #2e6f9e;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 4px rgba(240, 232, 216, 0.95), 0 0 2px rgba(240, 232, 216, 0.95);
+  padding: 0;
+}
+.leaflet-tooltip.river-label::before { display: none; }
 
 /* 根据地区域标签 */
 .leaflet-tooltip.zone-label {

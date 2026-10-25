@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ARMIES } from '../data/armies'
 import { ZONES, KMT_BLOCKADES, KMT_UNITS, JAPAN_CRISES } from '../data/situation'
+import { RIVERS } from '../data/rivers'
 import { STORIES } from '../data/stories'
 import { strengthAt, strengthText, STRENGTH_TOTAL } from '../data/strength'
 import {
@@ -32,6 +33,7 @@ const counts = computed(() => {
     kmt: [...KMT_BLOCKADES, ...KMT_UNITS].filter(active).length,
     japan: JAPAN_CRISES.filter(active).length,
     stories: STORIES.filter(active).length,
+    rivers: RIVERS.length, // 静态地理层，无时间窗
   }
 })
 
@@ -63,6 +65,13 @@ const SITUATION_ITEMS = [
     sub: '半条被子 · 金色鱼钩 · 丰碑',
     color: '#d4a94e',
     tip: '长征路上体现不怕牺牲、患难与共、鱼水情深的故事，点击地图书签阅读',
+  },
+  {
+    key: 'rivers',
+    name: '江河要津',
+    sub: '湘江 · 乌江 · 赤水 · 金沙江 · 大渡河',
+    color: '#2f7fbf',
+    tip: '长征渡过的十条大江大河（简化示意走线）——一条大河就是一道雄关',
   },
 ]
 
@@ -132,6 +141,19 @@ const strengths = computed(() => {
       </span>
       <span class="a-status">{{ counts[s.key] }} 处</span>
     </button>
+
+    <h4 class="lg-sec">显示设置</h4>
+    <div class="mode-seg" title="事件图标的展示方式">
+      <button :class="{ on: playback.markerMode === 'march' }" @click="playback.markerMode = 'march'">
+        随行军浮现
+      </button>
+      <button :class="{ on: playback.markerMode === 'all' }" @click="playback.markerMode = 'all'">
+        全部常显
+      </button>
+    </div>
+    <div class="mode-note">
+      {{ playback.markerMode === 'march' ? '行军中隐藏未抵达的图标，小红军走过即浮现' : '全部图标常显，未发生的淡化展示' }}
+    </div>
     </div>
   </div>
 </template>

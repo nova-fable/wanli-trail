@@ -23,6 +23,7 @@
 
 - **时间域**：`T_START = 1934-10-01` → `T_END = 1936-10-31`；1× 速率 = 7 天/秒；支持 0.5/1/2/4×。
 - **驱动**：`setInterval(tick, 50)` 而非 rAF——窗口被遮挡/失焦时 rAF 会被宿主暂停，interval 仍推进（IAB 环境实测结论）。`pause()` 即 `clearInterval`，`play()` 按需重建。
+- **遮挡防护**：后台标签被强化节流时 tick 间隔会暴涨至分钟级——dt > 5s 视为"曾被挂起"，跳帧不推进（恢复后原时间续播）；其余帧 dt 限幅 2s。防止遮挡期间"时间飞跃"误触终点或误置 `finished`。
 - **事件指针**：`nextEventIdx` 指向下一个未越过事件；autoTour 开启时 tick 越线即暂停、写 `currentEvent/panelEvent`（**markRaw**，避免 Vue 代理破坏事件对象同一性）；关闭时仅更新 `lastEventArmy` 供镜头跟随。
 - **seek 语义**：拖动/跳转**不置 `finished`**（结语只在 tick 自然到达终点时触发，防止拖到末端误弹结语或"回卷重播"）。
 
@@ -31,8 +32,8 @@
 - 每军四条折线：ghost（未走虚线）/ casing（白衬底）/ traveled（主色实线）/ flow（流动虚线示方向），`smoothFactor: 0.2` 保留曲线。
 - **增量折线（updateTraveled）**：持久数组只在跨越加密点时追加、同段推进时改队尾；队尾偏移 <1km 不触发 `setLatLngs`（限流）。`positionAt(..., { noTravel: true })` 跳过每帧全量 traveled 分配。完成态缓存最终数组短路。
 - **方向箭头（syncArrows）**：沿已走路径每 140km（zoom≥7 时 60km）布一枚 ▲，按方位角旋转；前进增量放置，回拨超 step/4 或换密度档时整组重建（`arrowMaxKm` 单调递增防陈旧箭头残留）。
-- **事件标记**：50 个 divIcon（宋体单字徽记，会师为 ★）；已发生/未发生样式仅在跨越计数变化时 diff 更新。
-- **态势显隐（updateSituation）**：每帧只比对时间窗（parseDate 已记忆化），状态翻转才增删图层。
+- **事件标记**：50 个手绘符号 divIcon（七种不规则轮廓，会师为 ★）；显隐由 `syncMarkerVisibility` 统一管理——`markerMode: march`（默认）下行军先于识图：未抵达的事件隐藏、走过即浮现（讲解中的事件始终可见）；`all` 模式未发生淡化。仅跨越计数或模式变化时 diff 更新 DOM。
+- **态势显隐（updateSituation）**：每帧只比对时间窗（parseDate 已记忆化），状态翻转才增删图层；江河要津为静态地理层，仅受图例开关控制。
 - **镜头状态机**：
   - `beginCamFlight(target, zoom, dur)` 统一入口：flyTo + moveend 释放 + (dur+0.8)s 超时兜底（遮挡环境 rAF 冻结时保证落位）；飞行中 `camBusy=true` 挂起跟拍。
   - 跟拍：`followCam` 锚点 EMA 收敛（k=0.085，落后 >0.6° 时 0.22 追赶）+ `.smooth-follow` CSS 过渡补间；锚点丢失时从**当前视野中心**起步平滑收拢。

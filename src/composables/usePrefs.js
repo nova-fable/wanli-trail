@@ -24,6 +24,7 @@ function write() {
         speed: playback.speed,
         autoTour: playback.autoTour,
         follow: playback.follow,
+        markerMode: playback.markerMode,
         legendCollapsed: legendCollapsed.value,
         armyVisible: { ...armyVisible },
         situationVisible: { ...situationVisible },
@@ -41,6 +42,7 @@ export function initPrefs() {
   if (typeof p.speed === 'number') playback.speed = p.speed
   if (typeof p.autoTour === 'boolean') playback.autoTour = p.autoTour
   if (typeof p.follow === 'boolean') playback.follow = p.follow
+  if (p.markerMode === 'march' || p.markerMode === 'all') playback.markerMode = p.markerMode
   if (typeof p.legendCollapsed === 'boolean') legendCollapsed.value = p.legendCollapsed
   if (p.armyVisible) {
     for (const k of Object.keys(armyVisible)) {
@@ -58,6 +60,7 @@ export function initPrefs() {
       playback.speed,
       playback.autoTour,
       playback.follow,
+      playback.markerMode,
       legendCollapsed.value,
       { ...armyVisible },
       { ...situationVisible },

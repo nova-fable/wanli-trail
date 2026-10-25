@@ -138,14 +138,14 @@ function buildSituation() {
 
   KMT_UNITS.forEach((u) => {
     const m = L.marker([u.lat, u.lng], { icon: enemyIcon(u.short), zIndexOffset: 200 })
-    m.bindTooltip(`${u.name}（${u.dateLabel}）`, { direction: 'top', offset: [0, -18], className: 'ev-tip' })
+    m.bindTooltip(`${u.name}（${u.dateLabel}）`, { direction: 'top', offset: [0, -42], className: 'ev-tip' })
     m.bindPopup(warPopup(u, '国民党军'), { className: 'war-popup', maxWidth: 290 })
     situationEntities.push({ id: u.id, data: u, obj: m, group: 'kmt', active: undefined })
   })
 
   JAPAN_CRISES.forEach((j) => {
     const m = L.marker([j.lat, j.lng], { icon: japanIcon(), zIndexOffset: 150 })
-    m.bindTooltip(`${j.name}（${j.dateLabel}）`, { direction: 'top', offset: [0, -16], className: 'ev-tip' })
+    m.bindTooltip(`${j.name}（${j.dateLabel}）`, { direction: 'top', offset: [0, -32], className: 'ev-tip' })
     m.bindPopup(warPopup(j, '日军威胁'), { className: 'war-popup', maxWidth: 290 })
     situationEntities.push({ id: j.id, data: j, obj: m, group: 'japan', active: undefined })
   })
@@ -226,14 +226,82 @@ function walkerIcon(army) {
   })
 }
 
+// ===== 事件地点图标：手绘军用地图符号（不规则图形，半透明填充不遮挡底图） =====
+// 七种轮廓各表其类：出发=三角旗 / 战役=盾 / 会议=八角印 / 会师=五角星 /
+// 天险=双峰山形 / 到达=下指锚镞 / 根据地=城垛；锚点为图形尖端所指的事件坐标
+// tx/ty 为徽记单字中心（星形不置字）
+const EV_SHAPES = {
+  depart: {
+    size: [34, 44], anchor: [9, 42], tx: 13.5, ty: 15.6,
+    art: `<line class="ev-pole" x1="9" y1="41" x2="9" y2="4"/>
+      <ellipse class="ev-ground" cx="9" cy="41.5" rx="2.4" ry="1"/>
+      <path class="ev-plate" d="M10 4 L30 11.5 L10 19 Z"/>`,
+  },
+  battle: {
+    size: [30, 31], anchor: [15, 29], tx: 15, ty: 15.5,
+    art: `<path class="ev-plate" d="M2 3 h26 v9 c0 8 -8 13.5 -13 17 c-5 -3.5 -13 -9 -13 -17 z"/>`,
+  },
+  meeting: {
+    size: [30, 30], anchor: [15, 28], tx: 15, ty: 19.5,
+    art: `<path class="ev-plate" d="M8 2 h14 l6 6 v14 l-6 6 h-14 l-6 -6 v-14 z"/>`,
+  },
+  join: {
+    size: [30, 30], anchor: [15, 27.5],
+    art: `<path class="ev-star" d="M15 1.5 L18.41 10.81 L28.31 11.17 L20.52 17.29 L23.23 26.83 L15 21.3 L6.77 26.83 L9.48 17.29 L1.69 11.17 L11.59 10.81 Z"/>`,
+  },
+  pass: {
+    size: [32, 30], anchor: [16, 27], tx: 16.5, ty: 24.5,
+    art: `<path class="ev-plate" d="M1 27 L10.5 9 L15.5 17 L21 5 L31 27 Z"/>`,
+  },
+  arrive: {
+    size: [28, 33], anchor: [14, 31.5], tx: 14, ty: 15.5,
+    art: `<path class="ev-plate" d="M14 1 c7.2 0 13 5.4 13 12 c0 8.6 -8.4 14.6 -13 18.5 c-4.6 -3.9 -13 -9.9 -13 -18.5 c0 -6.6 5.8 -12 13 -12 z"/>`,
+  },
+  base: {
+    size: [30, 31], anchor: [15, 31], tx: 15, ty: 18.5,
+    art: `<path class="ev-plate" d="M3 9 V26 L15 31 L27 26 V9 H22 V4 H17.5 V9 H12.5 V4 H8 V9 Z"/>`,
+  },
+}
+
 function eventIcon(ev) {
   const meta = EVENT_TYPES[ev.type]
-  const star = ev.type === 'join'
+  const s = EV_SHAPES[ev.type] || EV_SHAPES.battle
+  const text = s.tx == null ? '' : `<text x="${s.tx}" y="${s.ty}">${meta.mark}</text>`
   return L.divIcon({
     className: '',
-    html: `<div class="ev-dot${star ? ' ev-star' : ''}" style="--ec:${meta.color}"><span>${star ? '★' : meta.mark}</span></div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    html: `<div class="ev-mark" style="--ec:${meta.color}"><svg viewBox="0 0 ${s.size[0]} ${s.size[1]}" width="${s.size[0]}" height="${s.size[1]}" aria-hidden="true">${s.art}${text}</svg></div>`,
+    iconSize: s.size,
+    iconAnchor: s.anchor,
+  })
+}
+
+// ===== 国民党军单位：燕尾旗（旗杆底端即驻地坐标） =====
+function enemyIcon(short) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="kmt-flag"><svg viewBox="0 0 34 44" width="34" height="44" aria-hidden="true">
+      <line class="ev-pole" x1="9" y1="41" x2="9" y2="4"/>
+      <ellipse class="ev-ground" cx="9" cy="41.5" rx="2.4" ry="1"/>
+      <circle cx="9" cy="3.5" r="1.5" fill="#9db4c8"/>
+      <path d="M10 5 h20 l-5 6.5 5 6.5 h-20 z" fill="rgba(53,72,92,0.78)" stroke="#9db4c8" stroke-width="1.2" stroke-linejoin="round"/>
+      <text x="20" y="16.3" text-anchor="middle" font-size="9" font-weight="700" fill="#eef3f8" font-family="Songti SC, STSong, serif">${short}</text>
+    </svg></div>`,
+    iconSize: [34, 44],
+    iconAnchor: [9, 42],
+  })
+}
+
+// ===== 日军威胁：放射芒星（警示 + 旭日意象，外层光束缓脉冲） =====
+function japanIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div class="jp-mark"><svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+      <path class="rays" d="M54 28 L41.86 33.74 L46.38 46.38 L33.74 41.86 L28 54 L22.26 41.86 L9.62 46.38 L14.14 33.74 L2 28 L14.14 22.26 L9.62 9.62 L22.26 14.14 L28 2 L33.74 14.14 L46.38 9.62 L41.86 22.26 Z"/>
+      <path class="core" d="M44 28 L36.31 31.45 L39.31 39.31 L31.45 36.31 L28 44 L24.55 36.31 L16.69 39.31 L19.69 31.45 L12 28 L19.69 24.55 L16.69 16.69 L24.55 19.69 L28 12 L31.45 19.69 L39.31 16.69 L36.31 24.55 Z"/>
+      <text x="28" y="31.8" text-anchor="middle" font-size="11" font-weight="700" fill="#ffe0da" stroke="rgba(43,28,16,0.55)" stroke-width="0.7" paint-order="stroke" font-family="Songti SC, STSong, serif">日</text>
+    </svg></div>`,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
   })
 }
 
@@ -290,24 +358,6 @@ function syncArrows(ly, pos, color, step) {
   }
   ly.arrowIdx = Math.max(ly.arrowIdx, ll.length)
   ly.arrowMaxKm = Math.max(ly.arrowMaxKm || 0, pos.km)
-}
-
-function enemyIcon(short) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="enemy-unit">${short}</div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-  })
-}
-
-function japanIcon() {
-  return L.divIcon({
-    className: '',
-    html: `<div class="japan-unit">日</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-  })
 }
 
 function storyIcon() {
@@ -452,7 +502,7 @@ function render() {
   const passed = countPassed(t)
   if (passed !== lastPassedCount) {
     EVENTS.forEach((ev, i) => {
-      const el = eventMarkers[i].getElement()?.querySelector('.ev-dot')
+      const el = eventMarkers[i].getElement()?.querySelector('.ev-mark')
       if (el) el.classList.toggle('ev-future', i >= passed)
     })
     lastPassedCount = passed
@@ -586,7 +636,7 @@ onMounted(() => {
     const m = L.marker([ev.lat, ev.lng], { icon: eventIcon(ev), zIndexOffset: 500 })
     m.bindTooltip(`${i + 1}. ${ev.name}（${ev.dateLabel}）`, {
       direction: 'top',
-      offset: [0, -12],
+      offset: [0, -32],
       className: 'ev-tip',
     })
     m.on('click', () => {
@@ -674,7 +724,7 @@ watch(
   () => playback.panelEvent,
   (ev) => {
     eventMarkers.forEach((m, i) => {
-      const el = m.getElement()?.querySelector('.ev-dot')
+      const el = m.getElement()?.querySelector('.ev-mark')
       if (el) el.classList.toggle('ev-active', !!ev && EVENTS[i].id === ev?.id)
     })
     if (ev) flyToEvent(ev)

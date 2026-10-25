@@ -223,12 +223,56 @@ button {
 .leaflet-tooltip.ev-label::before { display: none; }
 
 /* 会师节点五角星徽 */
-.ev-dot.ev-star {
-  background: radial-gradient(circle at 35% 30%, #ffe9a8, var(--gold-deep));
-  border-color: #fff3d6;
-  color: #7a4b00;
-  font-size: 13px;
-  box-shadow: 0 0 0 2px rgba(201, 146, 46, 0.35), 0 2px 8px rgba(0, 0, 0, 0.45);
+/* ===== 地图标记：手绘军用地图符号（不规则图形 + 半透明填充，不遮挡底图） ===== */
+
+/* 事件地点符号：七种轮廓（旗/盾/印/星/山/锚/城垛），尖端锚定事件坐标 */
+.ev-mark {
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+.ev-mark svg {
+  display: block;
+  overflow: visible;
+  transition: transform 0.12s;
+  transform-origin: 50% 100%;
+}
+.ev-mark .ev-plate {
+  fill: var(--ec);
+  fill-opacity: 0.52;
+  stroke: var(--ec);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.ev-mark .ev-star {
+  fill: #e8b62c;
+  fill-opacity: 0.82;
+  stroke: #8a6f4d;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.ev-mark .ev-pole {
+  stroke: #4a3a28;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.ev-mark .ev-ground { fill: rgba(0, 0, 0, 0.25); }
+.ev-mark text {
+  font-family: var(--serif);
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: #fffdf6;
+  stroke: rgba(43, 28, 16, 0.55);
+  stroke-width: 0.7;
+  paint-order: stroke;
+  text-anchor: middle;
+}
+.ev-mark:hover svg { transform: scale(1.24); }
+.ev-mark.ev-future { opacity: 0.4; }
+.ev-mark.ev-future svg { filter: grayscale(0.55); }
+.ev-mark.ev-active svg { animation: ev-pop 1s infinite alternate; }
+@keyframes ev-pop {
+  from { transform: scale(1); }
+  to { transform: scale(1.32); filter: drop-shadow(0 0 8px var(--ec)); }
 }
 
 /* 路线流动虚线：指示行进方向；仅在行进播放时运行动画（暂停即停，避免恒定重栅格化） */
@@ -301,38 +345,6 @@ button {
 .walker.done .w-flag { fill: #9aa3b0; }
 
 /* 地图上的事件标记 */
-.ev-dot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: #fffdf6;
-  border: 2px solid var(--ec, #e53935);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-  transition: transform 0.12s;
-  cursor: pointer;
-}
-/* 宋体单字徽记：跨平台稳定、贴合仿古档案语言 */
-.ev-dot span {
-  font-family: var(--serif);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ec, #e53935);
-  line-height: 1;
-}
-.ev-dot:hover { transform: scale(1.25); z-index: 999; }
-.ev-future { opacity: 0.35; filter: grayscale(0.6); }
-.ev-active {
-  opacity: 1;
-  animation: ev-pop 1s infinite alternate;
-  z-index: 1000;
-}
-@keyframes ev-pop {
-  from { transform: scale(1); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4); }
-  to { transform: scale(1.35); box-shadow: 0 0 18px var(--ec, #e53935); }
-}
-
 /* ===== 左上图例 ===== */
 .army-legend {
   position: absolute;
@@ -1184,56 +1196,46 @@ button {
 .fp-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; margin-top: 3px; }
 
 /* ===== 战场态势层 ===== */
-/* 国民党军驻防方标 */
-.enemy-unit {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
-  background: linear-gradient(160deg, #35485c, #232f3d);
-  border: 2px solid #9db4c8;
-  color: #eef3f8;
-  font-weight: 700;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+/* 国民党军单位：燕尾旗（旗杆底端即驻地坐标，旗面半透明不遮挡底图） */
+.kmt-flag {
   cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
-.enemy-unit::after {
-  content: '';
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #90a4ae;
-  border: 1.5px solid #fff;
+.kmt-flag svg {
+  display: block;
+  overflow: visible;
+  transition: transform 0.15s;
+  transform-origin: 30% 100%;
 }
+.kmt-flag:hover svg { transform: scale(1.12); }
+.kmt-flag .ev-pole {
+  stroke: #9db4c8;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.kmt-flag .ev-ground { fill: rgba(0, 0, 0, 0.3); }
 
-/* 日军威胁标记 */
-.japan-unit {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #8e2020, #4a0f0f);
-  border: 2px solid #ff8a80;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 0 rgba(120, 144, 156, 0.45);
-  animation: jp-pulse 3.5s infinite;
-  cursor: pointer;
+/* 日军威胁：放射芒星（警示 + 旭日意象），外层光束缓慢扩散示警 */
+.jp-mark { cursor: pointer; }
+.jp-mark svg { display: block; overflow: visible; }
+.jp-mark .core {
+  fill: rgba(142, 32, 32, 0.5);
+  stroke: #ff8a80;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
 }
-@keyframes jp-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(120, 144, 156, 0.45); }
-  70% { box-shadow: 0 0 0 11px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
+.jp-mark .rays {
+  fill: none;
+  stroke: rgba(255, 138, 128, 0.6);
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: jp-rays 3.5s ease-out infinite;
+}
+@keyframes jp-rays {
+  0% { opacity: 0; transform: scale(0.75); }
+  55% { opacity: 0.75; }
+  100% { opacity: 0; transform: scale(1.28); }
 }
 
 /* 根据地区域标签 */

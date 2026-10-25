@@ -39,7 +39,7 @@ export default [
 
 - 源码按部队分段书写，**导出时按 date 重排序**——插入位置只影响可读性。
 - `id` 一经发布不改（figures.js#firstEvent 引用它）。
-- 类型徽记（EVENT_TYPES.mark）：`出/战/议/会/险/抵/据`，新增类型须同时给 mark 与 color。
+- 类型徽记（EVENT_TYPES.mark）：`出/战/议/会/险/抵/据`，新增类型须同时给 mark 与 color，并在 SandboxMap 的 `EV_SHAPES` 补对应不规则轮廓（现有：旗/盾/印/星/山/锚/城垛）。
 
 ## 人物（data/figures.js）
 

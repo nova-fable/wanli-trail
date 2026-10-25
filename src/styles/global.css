@@ -352,18 +352,21 @@ button {
 
 /* 地图上的事件标记 */
 /* ===== 左上图例 ===== */
+/* 固定宽度 224px：内部文字一律截断/换行，任何内容都不允许撑开卡片 */
+/* 半透明玻璃底（比 --panel 更透）：透出羊皮纸底图，blur+描边保证可读性 */
 .army-legend {
   position: absolute;
   top: 12px; left: 12px;
   z-index: 1000;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  width: 224px;
+  background: rgba(15, 19, 26, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-panel);
   padding: 10px 12px;
-  backdrop-filter: blur(8px);
-  min-width: 200px;
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
   font-size: 12px;
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
 }
 .army-legend h4 {
   font-family: var(--serif);
@@ -393,10 +396,17 @@ button {
   border-radius: 3px;
   flex: none;
 }
-.army-item .a-info { display: flex; flex-direction: column; gap: 1px; }
+.army-item .a-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+/* 名称/副行单行截断：固定宽度下不被长文本撑开（悬停可见 title 全文） */
+.army-item .a-name,
+.army-item .a-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .army-item .a-name { color: var(--text); font-weight: 600; }
 .army-item .a-sub { color: var(--text-dim); font-size: 10px; }
-.army-item .a-status { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+.army-item .a-status { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; flex: none; padding-left: 6px; }
 .army-item.off { opacity: 0.4; }
 .army-item.off .swatch { background: #555 !important; }
 
@@ -1035,7 +1045,7 @@ button {
 @media (max-width: 768px) {
   .app-header { overflow-x: auto; }
   .pill-toggle { padding: 4px 9px; font-size: 11px; }
-  .army-legend { min-width: 150px; max-width: 60vw; font-size: 11px; }
+  .army-legend { width: 190px; font-size: 11px; }
   .event-panel,
   .figures-panel,
   .event-index { width: min(330px, calc(100vw - 24px)); }
@@ -1391,6 +1401,7 @@ button {
 /* ===== 图例：兵力消长 ===== */
 .army-legend { max-height: calc(100% - 24px); overflow-y: auto; }
 .str-box { padding: 2px 4px 4px; }
+/* 出发→到达区间说明允许换行（固定宽度下不再撑开卡片） */
 .str-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
 .str-num {
   font-family: var(--serif);
@@ -1399,7 +1410,7 @@ button {
   letter-spacing: 1px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
-.str-sub { font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+.str-sub { flex: 1; min-width: 0; font-size: 10px; color: var(--text-dim); line-height: 1.5; }
 .str-row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
 .str-name { font-size: 11px; font-weight: 700; flex: none; width: 44px; }
 .str-bar {

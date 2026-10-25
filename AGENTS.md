@@ -20,27 +20,41 @@
 ## 目录
 
 ```text
-index.html                     唯一前端入口
-src/main.js                    应用挂载
-src/App.vue                    布局壳（顶栏/主区/时间带/浮层）与全局快捷键
+index.html                     唯一前端入口（内含 #boot 预置启动屏：消灭首帧地图闪烁）
+src/main.js                    应用挂载 + 移除 #boot
+src/router/index.js            极简 hash 路由（intro/sandbox 双页；ROUTES 枚举单源）
+src/App.vue                    路由装配层（按路由渲染开场页/沙盘页）+ 全局快捷键
 src/styles/global.css          全部样式单源（组件内禁止 <style> 块）
+src/core/                      跨域基础设施（不依赖业务组件）
+  constants/map.js              地图几何常量（视野/跟随zoom/箭头间距/底部预留）
+  constants/colors.js           Leaflet 图层配色（JS 侧单源）
+  constants/storage.js          localStorage 键名
+  enums/index.js                UI 枚举（MARKER_MODE/LANG）
+  i18n/                         列式词典引擎（zhCN 基础键源 + en Partial + t()）
 src/utils/geo.js               时间/地理工具：parseDate（记忆化）、endOfDay、样条加密、positionAt
 src/composables/
-  usePlayback.js               播放引擎单例（时间域/倍速/事件指针/seek）
+  usePlayback.js               播放引擎单例（时间域/倍速/事件指针/seek/dt 限幅）
   useLayers.js                 图层显隐与四军实时状态
   useMapBase.js                底图配置
-  usePrefs.js                  用户偏好持久化（localStorage）
+  usePrefs.js                  用户偏好持久化（localStorage，含语言代管）
 src/data/                      史实数据集（单源，文档在 docs/history、docs/spirit）
   armies.js  routes/           四路红军元信息与带日期航点
   events.js                    50 个关键事件（导出时按日期重排序）
   figures.js                   20 位人物（firstEvent 引用事件 id）
   situation.js                 态势实体（全部带 from/to 时间窗）
+  rivers.js                    江河要津简化走线
   stories.js strength.js quotes.js phases.js
+src/map/                       Leaflet 域逻辑模块（SandboxMap 只编排）
+  icons.js                      五类点标记 SVG 工厂 + EV_SHAPES 七轮廓
+  camera.js                     跟随镜头状态机（飞行互斥 + EMA 跟拍）
+  traveled.js                   已走折线增量维护（热路径性能关键）
+  arrows.js                     方向箭头增量布设
+  situation.js                  态势构建 + 时间窗显隐
 src/components/                视图组件（SandboxMap/TimelineBar/EventPanel/EventIndex/ArmyLegend/...）
 docs/
   history/                     事件全录、战役志、人物志、路线志、战场态势
   spirit/                      精神印记、长征诗词、长征精神
-  dev/                         系统架构、设计语言、数据格式规范
+  dev/                         系统架构、设计语言、数据格式规范、i18n 规范
 ```
 
 ## 数据层约定

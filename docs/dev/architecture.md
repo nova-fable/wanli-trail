@@ -4,7 +4,15 @@
 
 ## 总体形态
 
-纯前端单页应用：Vite 5 构建，Vue 3（`<script setup>`，纯 JS）组织界面，Leaflet 1.9 命令式集成地图。无路由、无全局状态库、无后端；`src/data/` 静态数据即"数据库"。
+纯前端单页应用：Vite 5 构建，Vue 3（`<script setup>`，纯 JS）组织界面，Leaflet 1.9 命令式集成地图。**双页面 hash 路由**（开场页/沙盘页，零依赖手写）+ 零全局状态库；`src/data/` 静态数据即"数据库"。
+
+```text
+route（router/index.js）──▶ App 按路由渲染 ──▶ #/intro 开场页（不初始化地图）
+                                          └──▶ #/sandbox 沙盘页（SandboxMap + 全部浮层）
+usePlayback（时间域单例）── tick 50ms ──▶ playback.time ──▶ SandboxMap.render()
+```
+
+**防闪烁**：index.html 预置 `#boot` 静态启动屏（与开场页同款视觉），JS 挂载后由 main.js 移除——刷新首帧永远与开场页同款，且开场路由不初始化地图。
 
 ```text
 用户/播放器 ──▶ usePlayback（时间域单例）──▶ playback.time
@@ -27,12 +35,23 @@
 - **事件指针**：`nextEventIdx` 指向下一个未越过事件；autoTour 开启时 tick 越线即暂停、写 `currentEvent/panelEvent`（**markRaw**，避免 Vue 代理破坏事件对象同一性）；关闭时仅更新 `lastEventArmy` 供镜头跟随。
 - **seek 语义**：拖动/跳转**不置 `finished`**（结语只在 tick 自然到达终点时触发，防止拖到末端误弹结语或"回卷重播"）。
 
-## 地图渲染（SandboxMap.vue）
+## 地图渲染（SandboxMap.vue + src/map/ 模块）
+
+SandboxMap.vue 只做编排；逻辑按域拆分：
+
+| 模块 | 职责 |
+|---|---|
+| `map/icons.js` | 五类点标记 SVG 工厂 + EV_SHAPES 七轮廓几何 |
+| `map/camera.js` | 跟随镜头状态机（createCamera：飞行互斥/EMA 跟拍/恢复收拢） |
+| `map/traveled.js` | 已走折线增量维护（createTravelTracker，热路径性能关键） |
+| `map/arrows.js` | 方向箭头增量布设（syncArrows/clearArrows，缩放档位换密度） |
+| `map/situation.js` | 态势实体构建 + 时间窗显隐 + 精神印记 toast 回调 |
 
 - 每军四条折线：ghost（未走虚线）/ casing（白衬底）/ traveled（主色实线）/ flow（流动虚线示方向），`smoothFactor: 0.2` 保留曲线。
 - **增量折线（updateTraveled）**：持久数组只在跨越加密点时追加、同段推进时改队尾；队尾偏移 <1km 不触发 `setLatLngs`（限流）。`positionAt(..., { noTravel: true })` 跳过每帧全量 traveled 分配。完成态缓存最终数组短路。
 - **方向箭头（syncArrows）**：沿已走路径每 140km（zoom≥7 时 60km）布一枚 ▲，按方位角旋转；前进增量放置，回拨超 step/4 或换密度档时整组重建（`arrowMaxKm` 单调递增防陈旧箭头残留）。
 - **事件标记**：50 个手绘符号 divIcon（七种不规则轮廓，会师为 ★）；显隐由 `syncMarkerVisibility` 统一管理——`markerMode: march`（默认）下行军先于识图：未抵达的事件隐藏、走过即浮现（讲解中的事件始终可见）；`all` 模式未发生淡化。仅跨越计数或模式变化时 diff 更新 DOM。
+- **路由与启动**：hash 路由双页（intro/sandbox），`#/sandbox` 深链直达；路由名枚举 ROUTES 在 router/index.js。
 - **态势显隐（updateSituation）**：每帧只比对时间窗（parseDate 已记忆化），状态翻转才增删图层；江河要津为静态地理层，仅受图例开关控制。
 - **镜头状态机**：
   - `beginCamFlight(target, zoom, dur)` 统一入口：flyTo + moveend 释放 + (dur+0.8)s 超时兜底（遮挡环境 rAF 冻结时保证落位）；飞行中 `camBusy=true` 挂起跟拍。

@@ -5,7 +5,7 @@
 `wanli-trail` 是一个**纯前端的红军长征沙盘演示应用**（仓库 `nova-fable/wanli-trail`）。它只做：
 
 - 四路红军（红一/红二/红四方面军、红二十五军）1934.10—1936.10 全程路线的 GIS 沙盘演示
-- 纪录片式自动播放（50 个关键事件自动暂停讲解）+ 自由探索两种模式
+- 纪录片式自动播放（57 个关键事件自动暂停讲解）+ 自由探索两种模式
 - 战场态势（苏区/国民党军/日军）、兵力消长、精神印记、诗词字幕等史实内容层
 
 不包含：后端服务、账号体系、真实地图数据下载、移动 App 打包。所有史实数据**本地静态、坐标为近似考证值**，修正史实直接改 `src/data/`，不引入数据库。
@@ -39,8 +39,8 @@ src/composables/
   usePrefs.js                  用户偏好持久化（localStorage，含语言代管）
 src/data/                      史实数据集（单源，文档在 docs/history、docs/spirit）
   armies.js  routes/           四路红军元信息与带日期航点
-  events.js                    50 个关键事件（导出时按日期重排序）
-  figures.js                   20 位人物（firstEvent 引用事件 id）
+  events.js                    57 个关键事件（导出时按日期重排序）
+  figures.js                   22 位人物（firstEvent 引用事件 id）
   situation.js                 态势实体（全部带 from/to 时间窗）
   rivers.js                    江河要津简化走线
   stories.js strength.js quotes.js phases.js

@@ -8,11 +8,12 @@
 
 | 文档 | 内容 |
 |---|---|
-| [events.md 事件全录](history/events.md) | 50 个关键事件全条目：按部队与时期分组，含日期、地点、类型、关联人物与完整讲解词 |
+| [events.md 事件全录](history/events.md) | 57 个关键事件全条目：按部队与时期分组，含日期、地点、类型、关联人物与完整讲解词 |
 | [battles.md 战役志](history/battles.md) | 十二场标志性战役的深度条目：背景、经过、结果、历史意义 |
-| [figures.md 人物志](history/figures.md) | 20 位关键人物小传：职务、长征事迹、首次登场事件 |
+| [figures.md 人物志](history/figures.md) | 22 位关键人物小传：职务、长征事迹、首次登场事件 |
 | [routes.md 路线志](history/routes.md) | 四路红军行军路线：起讫、里程、航点规模、关键转折与考证说明 |
 | [situation.md 战场态势](history/situation.md) | 六大苏区、四道封锁线、国民党军 13 个单位、日军 5 次民族危机的时间窗与说明 |
+| [martyrs.md 英烈志](history/martyrs.md) | 长征烈士名录：高级指挥员/师级指挥员/普通战士与无名英雄，附沙盘对应标注 |
 
 ### 精神篇（docs/spirit/）
 

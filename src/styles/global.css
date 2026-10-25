@@ -447,7 +447,8 @@ button {
   top: 12px; right: 12px;
   z-index: 1000;
   width: 330px;
-  max-height: calc(100% - 24px);
+  /* 底部预留全宽时间带（约 110px + 间隙），长内容在卡内滚动而不被其遮挡 */
+  max-height: calc(100% - 142px);
   overflow-y: auto;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -851,7 +852,7 @@ button {
   right: 12px;
   z-index: 1000;
   width: 322px;
-  max-height: calc(100% - 24px);
+  max-height: calc(100% - 142px);
   display: flex;
   flex-direction: column;
   background: var(--panel);
@@ -1211,7 +1212,7 @@ button {
   right: 12px;
   z-index: 1000;
   width: 302px;
-  max-height: calc(100% - 24px);
+  max-height: calc(100% - 142px);
   display: flex;
   flex-direction: column;
   background: var(--panel);
@@ -1399,7 +1400,8 @@ button {
 .story-mark:hover { transform: scale(1.2); }
 
 /* ===== 图例：兵力消长 ===== */
-.army-legend { max-height: calc(100% - 24px); overflow-y: auto; }
+/* 底部同样预留时间带高度（同右侧三个面板），展开过长时卡内滚动 */
+.army-legend { max-height: calc(100% - 142px); overflow-y: auto; }
 .str-box { padding: 2px 4px 4px; }
 /* 出发→到达区间说明允许换行（固定宽度下不再撑开卡片） */
 .str-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }

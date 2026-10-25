@@ -22,6 +22,7 @@ import AtmosphereFx from './components/AtmosphereFx.vue'
 import FinaleOverlay from './components/FinaleOverlay.vue'
 import { playback, toggle, restart, startTour, startExplore, seek, closePanel } from './composables/usePlayback'
 import { BASEMAPS } from './composables/useMapBase'
+import { EVENTS } from './data/events'
 import { initPrefs } from './composables/usePrefs'
 import { route, navigate, initRouter, ROUTES } from './router'
 import { useI18n } from './core/i18n'
@@ -181,7 +182,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <button
         class="pill-toggle"
         :class="{ on: showIndex }"
-        :title="t('tip.index', { n: 50 })"
+        :title="t('tip.index', { n: EVENTS.length })"
         @click="showIndex = !showIndex"
       >
         <span class="led"></span>{{ t('pill.index') }}

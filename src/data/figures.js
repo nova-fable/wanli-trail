@@ -59,6 +59,14 @@ export const FIGURES = [
     firstEvent: 'f1-wujiang',
   },
   {
+    id: 'dengping',
+    name: '邓萍',
+    army: 'first',
+    role: '红三军团参谋长',
+    desc: '长征中牺牲的唯一军团级将领。1935年2月二渡赤水重占遵义时，在老城前沿侦察敌情被冷枪击中头部牺牲，年仅27岁。',
+    firstEvent: 'f1-chishui2',
+  },
+  {
     id: 'yangchengwu',
     name: '杨成武',
     army: 'first',
@@ -113,6 +121,14 @@ export const FIGURES = [
     role: '红三十军政治委员',
     desc: '率部由岷江西进，攻占懋功、达维，最早迎接翻雪山而来的中央红军；包座战役中红三十军打援建功，为红军北上打开通道。',
     firstEvent: 'f4-jialingjiang',
+  },
+  {
+    id: 'luonanhui',
+    name: '罗南辉',
+    army: 'fourth',
+    role: '红五军副军长',
+    desc: '1936年10月22日（将台堡会师同日）在甘肃大墩梁阻击战中牺牲，年仅28岁——长征中牺牲的最后一位军级指挥员。',
+    firstEvent: 'grand-huining',
   },
   {
     id: 'guo',

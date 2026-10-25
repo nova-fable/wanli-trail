@@ -1,0 +1,20 @@
+{
+  "name": "long-march-sandbox",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "红军长征沙盘演示 —— 四路红军 1934.10–1936.10 全路线 GIS 沙盘",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^5.4.11"
+  }
+}

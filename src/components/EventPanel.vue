@@ -47,7 +47,9 @@ function continueFromEvent() {
 </script>
 
 <template>
-  <div v-if="ev" :key="ev.id" class="event-panel">
+  <!-- 不加 :key：相邻事件切换原地更新内容；v-if 只在面板开/关时挂载（入场动画仅此一次），
+       避免 :key 重建导致的整卡 slide-in 重放闪烁 -->
+  <div v-if="ev" class="event-panel">
     <div class="ep-top">
       <span class="ep-type" :style="{ background: typeMeta.color }">
         {{ typeMeta.mark }} {{ typeMeta.label }}

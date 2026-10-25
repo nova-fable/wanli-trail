@@ -9,8 +9,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="红军长征沙盘演示：四路红军 1934.10–1936.10 全路线交互式 GIS 沙盘" />
     <title>红军长征沙盘 · 1934–1936</title>
+    <style>
+      /*
+       * 预置启动屏（#boot）：在 JS 尚未加载/挂载的窗口期先渲染与开场页同款的静态画面。
+       * 消灭"刷新时短暂露出地图"的首帧闪烁——无论 JS 多慢，用户看到的始终是开场页，
+       * Vue 挂载完成后由 main.js 移除本节点。
+       */
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(ellipse at 50% 30%, rgba(140, 30, 30, 0.35), transparent 60%),
+          linear-gradient(160deg, #10141b 0%, #1a1216 55%, #0d1015 100%);
+        color: #f0e9d8;
+        font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', serif;
+      }
+      #boot .b-star {
+        font-size: 36px;
+        color: #e53935;
+        text-shadow: 0 0 26px rgba(229, 57, 53, 0.8);
+        margin-bottom: 16px;
+      }
+      #boot .b-title {
+        font-size: clamp(44px, 8vw, 76px);
+        letter-spacing: 22px;
+        text-indent: 22px;
+        text-shadow: 0 4px 30px rgba(229, 57, 53, 0.35);
+      }
+      #boot .b-sub {
+        margin-top: 14px;
+        font-size: 15px;
+        letter-spacing: 7px;
+        color: #b9b19c;
+      }
+      #boot .b-tip {
+        position: absolute;
+        bottom: 7vh;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: #5f6875;
+        font-family: 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" aria-hidden="true">
+      <div class="b-star">★</div>
+      <div class="b-title">红军长征</div>
+      <div class="b-sub">伟大的战略转移 · 1934.10 — 1936.10</div>
+      <div class="b-tip">正在铺开沙盘 …</div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

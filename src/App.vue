@@ -1,4 +1,14 @@
 <script setup>
+/**
+ * @file 应用根组件：双路由页面的装配层
+ *
+ * 职责：按路由渲染开场页/沙盘页；装配顶栏、地图、浮层；全局快捷键与结语页门控。
+ * 数据来源：route（路由单例）、playback（播放引擎单例）、usePrefs（偏好恢复）。
+ * 写路径：不直接写盘；用户意图经 composables（usePlayback）落地。
+ *
+ * 防闪烁说明：开场页是独立路由页（不初始化地图），配合 index.html 的 #boot 预置屏，
+ * 刷新首帧永远与开场页同款，不再短暂露出地图。
+ */
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import SandboxMap from './components/SandboxMap.vue'
 import TimelineBar from './components/TimelineBar.vue'
@@ -10,20 +20,27 @@ import IntroOverlay from './components/IntroOverlay.vue'
 import FiguresPanel from './components/FiguresPanel.vue'
 import AtmosphereFx from './components/AtmosphereFx.vue'
 import FinaleOverlay from './components/FinaleOverlay.vue'
-import { playback, toggle, restart, startTour, seek, closePanel } from './composables/usePlayback'
+import { playback, toggle, restart, startTour, startExplore, seek, closePanel } from './composables/usePlayback'
 import { BASEMAPS } from './composables/useMapBase'
 import { initPrefs } from './composables/usePrefs'
+import { route, navigate, initRouter, ROUTES } from './router'
+import { useI18n } from './core/i18n'
 
-// 恢复用户偏好（底图/倍速/开关/图层/图例折叠），需在子组件挂载前完成
+// 恢复用户偏好（底图/倍速/开关/图层/图例折叠/语言），需在子组件挂载前完成
 initPrefs()
+// 初始化路由（读当前 hash → 首帧即落在正确页面）
+initRouter()
 
+const { t, lang: langState, setLang, langs } = useI18n()
+
+/** 浮层开关：人物志 / 事件总览 / 操作指南 / 长征精神结语 */
 const showFigures = ref(false)
 const showIndex = ref(false)
 const showHelp = ref(false)
 const showFinale = ref(false)
 
-// 播放自然到达终点（演示讲解或连播）→ 弹出长征精神结语
-// finished 仅由 tick 置位，拖动/跳转不会误触
+// 播放自然到达终点（演示讲解或连播）→ 弹出长征精神结语。
+// finished 仅由 tick 置位（seek 不置位），拖动/跳转不会误触。
 watch(
   () => playback.finished,
   (v) => {
@@ -31,8 +48,23 @@ watch(
   },
 )
 
+/** 一天的毫秒数（快捷键 ±7 天步长用） */
 const DAY_MS = 86400000
 
+/**
+ * 开场页入口回调：按所选模式初始化播放状态并进入沙盘路由
+ * @param {'tour'|'explore'} mode 开始演示（纪录片式讲解）/ 自由探索
+ */
+function onStart(mode) {
+  if (mode === 'tour') startTour()
+  else startExplore()
+  navigate(ROUTES.SANDBOX)
+}
+
+/**
+ * Esc 逐层关闭浮层（后开先关）
+ * @returns {boolean} 是否有关闭对象（无则吞掉按键不做任何事）
+ */
 function closeTopOverlay() {
   if (showHelp.value) showHelp.value = false
   else if (showIndex.value) showIndex.value = false
@@ -43,25 +75,28 @@ function closeTopOverlay() {
   return true
 }
 
+/**
+ * 全局快捷键分发
+ * - 开场页：Enter/Space 开始演示
+ * - 沙盘页：Space 播放暂停；←/→ 前后七天；Esc 逐层关浮层
+ * - 焦点在 BUTTON/INPUT 等原生可交互元素上时，Space/Enter 让位给原生点击（避免双触发）
+ */
 function onKey(e) {
-  // 焦点在按钮等可交互元素上时，空格/回车交给原生点击，避免双重触发
   const t = e.target
-  if (
+  const onNativeControl =
     t instanceof HTMLElement &&
-    (t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') &&
-    (e.code === 'Space' || e.code === 'Enter')
-  ) {
-    return
-  }
+    (t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')
+  if (onNativeControl && (e.code === 'Space' || e.code === 'Enter')) return
+
   if (e.code === 'Escape') {
     e.preventDefault()
     closeTopOverlay()
     return
   }
-  if (!playback.started) {
+  if (route.name === ROUTES.INTRO) {
     if (e.code === 'Enter' || e.code === 'Space') {
       e.preventDefault()
-      startTour()
+      onStart('tour')
     }
     return
   }
@@ -81,112 +116,128 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <header class="app-header">
-    <div class="app-title">
-      <span class="title-star">★</span>
-      红军长征沙盘
-      <span class="years">1934 — 1936</span>
-    </div>
-    <div class="header-spacer"></div>
+  <!-- 路由页 1：开场页（独立整页，不渲染地图，杜绝首帧闪烁） -->
+  <IntroOverlay v-if="route.name === ROUTES.INTRO" @start="onStart" />
 
-    <div class="seg" title="切换底图">
+  <!-- 路由页 2：沙盘 -->
+  <template v-else>
+    <header class="app-header">
+      <div class="app-title">
+        <span class="title-star">★</span>
+        {{ t('app.title') }}
+        <span class="years">1934 — 1936</span>
+      </div>
+      <div class="header-spacer"></div>
+
+      <div class="seg" :title="t('lang.label')">
+        <button
+          v-for="l in langs"
+          :key="l.key"
+          :class="{ on: langState.lang === l.key }"
+          @click="setLang(l.key)"
+        >
+          {{ l.label }}
+        </button>
+      </div>
+
+      <div class="seg" :title="t('tip.basemap')">
+        <button
+          v-for="b in BASEMAPS"
+          :key="b.key"
+          :class="{ on: playback.basemap === b.key }"
+          @click="playback.basemap = b.key"
+        >
+          {{ b.name }}
+        </button>
+      </div>
+
       <button
-        v-for="b in BASEMAPS"
-        :key="b.key"
-        :class="{ on: playback.basemap === b.key }"
-        @click="playback.basemap = b.key"
+        class="pill-toggle"
+        :class="{ on: playback.follow }"
+        :title="t('tip.follow')"
+        @click="playback.follow = !playback.follow"
       >
-        {{ b.name }}
+        <span class="led"></span>{{ t('pill.follow') }}
       </button>
-    </div>
 
-    <button
-      class="pill-toggle"
-      :class="{ on: playback.follow }"
-      title="播放时镜头跟随部队推进（拖动地图会自动关闭）"
-      @click="playback.follow = !playback.follow"
-    >
-      <span class="led"></span>镜头跟随
-    </button>
+      <button
+        class="pill-toggle"
+        :class="{ on: playback.autoTour }"
+        :title="t('tip.autoTour')"
+        @click="playback.autoTour = !playback.autoTour"
+      >
+        <span class="led"></span>{{ t('pill.autoTour') }}
+      </button>
 
-    <button
-      class="pill-toggle"
-      :class="{ on: playback.autoTour }"
-      title="播放跨越关键事件时自动暂停并讲解"
-      @click="playback.autoTour = !playback.autoTour"
-    >
-      <span class="led"></span>自动讲解
-    </button>
+      <button
+        class="pill-toggle"
+        :class="{ on: showFigures }"
+        :title="t('tip.figures')"
+        @click="showFigures = !showFigures"
+      >
+        <span class="led"></span>{{ t('pill.figures') }}
+      </button>
 
-    <button
-      class="pill-toggle"
-      :class="{ on: showFigures }"
-      title="查看长征关键人物志，点击人物跳转其登场事件"
-      @click="showFigures = !showFigures"
-    >
-      <span class="led"></span>人物志
-    </button>
+      <button
+        class="pill-toggle"
+        :class="{ on: showIndex }"
+        :title="t('tip.index', { n: 50 })"
+        @click="showIndex = !showIndex"
+      >
+        <span class="led"></span>{{ t('pill.index') }}
+      </button>
 
-    <button
-      class="pill-toggle"
-      :class="{ on: showIndex }"
-      title="44 个关键事件总览，点击条目跳转讲解"
-      @click="showIndex = !showIndex"
-    >
-      <span class="led"></span>事件总览
-    </button>
+      <button
+        class="pill-toggle finale-btn"
+        :title="t('tip.finale')"
+        @click="showFinale = true"
+      >
+        ★ 长征精神
+      </button>
 
-    <button
-      class="pill-toggle finale-btn"
-      title="查看长征精神结语：五大精神 · 数说长征 · 七律长征"
-      @click="showFinale = true"
-    >
-      ★ 长征精神
-    </button>
+      <button class="pill-toggle" :title="t('tip.restart')" @click="restart">{{ t('pill.restart') }}</button>
+    </header>
 
-    <button class="pill-toggle" title="回到 1934 年 10 月重新播放" @click="restart">↻ 重新播放</button>
-  </header>
-
-  <main class="app-main">
-    <div class="map-wrap">
-      <SandboxMap />
-      <div class="parchment-fx"></div>
-      <div class="map-compass" title="上北下南">
-        <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
-          <circle cx="32" cy="32" r="27" fill="rgba(240,232,216,0.88)" stroke="#8a6f4d" stroke-width="1.5"/>
-          <circle cx="32" cy="32" r="21.5" fill="none" stroke="#c9b283" stroke-width="1" stroke-dasharray="2 4"/>
-          <path d="M32 7.5 L37.5 32 L32 28 L26.5 32 Z" fill="#c03a2b"/>
-          <path d="M32 56.5 L37.5 32 L32 36 L26.5 32 Z" fill="#7a6f5c"/>
-          <text x="32" y="21" text-anchor="middle" font-size="9.5" fill="#5a4a33" font-weight="700">北</text>
-          <circle cx="32" cy="32" r="1.6" fill="#5a4a33"/>
-        </svg>
+    <main class="app-main">
+      <div class="map-wrap">
+        <SandboxMap />
+        <div class="parchment-fx"></div>
+        <div class="map-compass" :title="t('tip.compass')">
+          <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+            <circle cx="32" cy="32" r="27" fill="rgba(240,232,216,0.88)" stroke="#8a6f4d" stroke-width="1.5"/>
+            <circle cx="32" cy="32" r="21.5" fill="none" stroke="#c9b283" stroke-width="1" stroke-dasharray="2 4"/>
+            <path d="M32 7.5 L37.5 32 L32 28 L26.5 32 Z" fill="#c03a2b"/>
+            <path d="M32 56.5 L37.5 32 L32 36 L26.5 32 Z" fill="#7a6f5c"/>
+            <text x="32" y="21" text-anchor="middle" font-size="9.5" fill="#5a4a33" font-weight="700">北</text>
+            <circle cx="32" cy="32" r="1.6" fill="#5a4a33"/>
+          </svg>
+        </div>
       </div>
-    </div>
-    <AtmosphereFx />
-    <ArmyLegend />
-    <EventPanel />
-    <FiguresPanel v-if="showFigures" @close="showFigures = false" />
-    <EventIndex v-if="showIndex" @close="showIndex = false" />
+      <AtmosphereFx />
+      <ArmyLegend />
+      <EventPanel />
+      <FiguresPanel v-if="showFigures" @close="showFigures = false" />
+      <EventIndex v-if="showIndex" @close="showIndex = false" />
 
-    <button class="help-btn" title="操作说明（Esc 关闭）" @click="showHelp = !showHelp">?</button>
-    <div v-if="showHelp" class="help-card">
-      <h5>❖ 操作指南</h5>
-      <div class="hk-row"><span>播放 / 暂停</span><kbd>空格</kbd></div>
-      <div class="hk-row"><span>前后七天</span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
-      <div class="hk-row"><span>关闭浮层</span><kbd>Esc</kbd></div>
-      <div class="hk-sec">
-        拖动地图即接管镜头（自动关闭跟随）；点击地图事件点、时间轴刻度或事件总览条目可跳转讲解；左上角图例可隐藏部队与战场态势层；倍速越高跟随视野越广。
+      <button class="help-btn" :title="t('help.title')" @click="showHelp = !showHelp">{{ t('help.btn') }}</button>
+      <div v-if="showHelp" class="help-card">
+        <h5>{{ t('help.title') }}</h5>
+        <div class="hk-row"><span>{{ t('help.hk.play') }}</span><kbd>Space</kbd></div>
+        <div class="hk-row"><span>{{ t('help.hk.days') }}</span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
+        <div class="hk-row"><span>{{ t('help.hk.close') }}</span><kbd>Esc</kbd></div>
+        <div class="hk-sec">
+          {{ t('help.sec') }}
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <footer class="app-footer">
-    <SubtitleBar />
-    <TimelineBar />
-  </footer>
+    <footer class="app-footer">
+      <SubtitleBar />
+      <TimelineBar />
+    </footer>
 
-  <div v-if="playback.toast" class="app-toast">{{ playback.toast }}</div>
+    <div v-if="playback.toast" class="app-toast">{{ playback.toast }}</div>
 
-  <IntroOverlay v-if="!playback.started" />
-  <FinaleOverlay v-if="showFinale" @close="showFinale = false" />
+    <FinaleOverlay v-if="showFinale" @close="showFinale = false" />
+  </template>
 </template>

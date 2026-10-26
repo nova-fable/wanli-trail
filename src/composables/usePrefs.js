@@ -13,7 +13,7 @@ import { playback } from './usePlayback'
 import { armyVisible, situationVisible } from './useLayers'
 import { PREFS_KEY } from '../core/constants/storage'
 import { MARKER_MODE } from '../core/enums'
-import { useI18n } from '../core/i18n'
+import { useI18n, initI18n } from '../core/i18n'
 
 /** 图例折叠状态（ArmyLegend 与持久化共用；不属播放引擎故独立于此） */
 export const legendCollapsed = ref(false)

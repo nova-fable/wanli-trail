@@ -1,14 +1,17 @@
 <!--
-  @file 事件总览索引面板：50 个事件的可筛选清单
+  @file 事件总览索引面板：57 个事件的可筛选清单
   职责：按部队筛选、已发生着色、当前项高亮；点击条目 → seek 到该日期并讲解。
   数据来源：EVENTS + playback.time（着色与"当前项"判定）。
+  骨架（根容器/标题栏/关闭按钮）复用 OverlayShell。
+  ⚠️ 原实现用 `shifted: !!playback.panelEvent`：面板与讲解卡同占右侧，讲解卡打开时需左移。
 -->
 <script setup>
 import { computed, ref } from 'vue'
-import { EVENTS, EVENT_TYPES, ARMIES } from '../mock'
+import { EVENTS, EVENT_TYPES, ARMIES, eventMeta, eventIndexOf } from '../mock'
 import { playback, openEvent, seek } from '../composables/usePlayback'
 import { parseDate } from '../utils/geo'
 import { useI18n } from '../core/i18n'
+import OverlayShell from './OverlayShell.vue'
 
 const { t } = useI18n()
 
@@ -32,6 +35,9 @@ const rows = computed(() => {
     ev,
     past: parseDate(ev.date) <= t,
     current: ev.id === currentId,
+    // 序号在此一次性取（eventMeta 内部走 EVENTS.indexOf，每行 O(n)）；
+    // 若放到模板里逐行调用则是渲染期 O(n²)，见文件头注释
+    meta: eventMeta(ev),
   }))
 })
 
@@ -45,11 +51,7 @@ function jump(ev) {
 </script>
 
 <template>
-  <div class="event-index" :class="{ shifted: !!playback.panelEvent }">
-    <div class="fp-head">
-      <h4>{{ t('ei.title') }}</h4>
-      <button class="ep-close" title="关闭" @click="emit('close')">✕</button>
-    </div>
+  <OverlayShell base-class="event-index" :title="t('ei.title')" @close="emit('close')">
     <div class="ei-filters">
       <button
         v-for="f in FILTERS"
@@ -69,11 +71,11 @@ function jump(ev) {
         :title="t('ei.itemTip', { name: r.ev.name })"
         @click="jump(r.ev)"
       >
-        <span class="ei-dot" :style="{ background: EVENT_TYPES[r.ev.type].color }"></span>
-        <span class="ei-idx">{{ EVENTS.indexOf(r.ev) + 1 }}</span>
+        <span class="ei-dot" :style="{ background: r.meta.typeMeta.color }"></span>
+        <span class="ei-idx">{{ r.meta.order }}</span>
         <span class="ei-name">{{ r.ev.name }}</span>
         <span class="ei-date">{{ r.ev.dateLabel }}</span>
       </button>
     </div>
-  </div>
+  </OverlayShell>
 </template>

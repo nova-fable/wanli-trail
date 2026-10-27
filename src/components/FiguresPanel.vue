@@ -1,11 +1,13 @@
 <!--
   @file 人物志面板：22 位关键人物清单
   职责：点击人物 → 暂停播放并打开其 firstEvent 讲解（镜头随之飞往）。
+  骨架（根容器/标题栏/关闭按钮）复用 OverlayShell。
 -->
 <script setup>
 import { FIGURES, figureColor, EVENTS } from '../mock'
 import { playback, openEvent } from '../composables/usePlayback'
 import { useI18n } from '../core/i18n'
+import OverlayShell from './OverlayShell.vue'
 
 const { t } = useI18n()
 
@@ -23,11 +25,7 @@ function jump(f) {
 </script>
 
 <template>
-  <div class="figures-panel" :class="{ shifted: !!playback.panelEvent }">
-    <div class="fp-head">
-      <h4>{{ t('fp.title') }}</h4>
-      <button class="ep-close" title="关闭" @click="emit('close')">✕</button>
-    </div>
+  <OverlayShell base-class="figures-panel" :title="t('fp.title')" @close="emit('close')">
     <div class="fp-list">
       <button
         v-for="f in FIGURES"
@@ -43,5 +41,5 @@ function jump(f) {
         </div>
       </button>
     </div>
-  </div>
+  </OverlayShell>
 </template>

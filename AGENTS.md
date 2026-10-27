@@ -8,7 +8,7 @@
 - 纪录片式自动播放（57 个关键事件自动暂停讲解）+ 自由探索两种模式
 - 战场态势（苏区/国民党军/日军）、兵力消长、精神印记、诗词字幕等史实内容层
 
-不包含：后端服务、账号体系、真实地图数据下载、移动 App 打包。所有史实数据**本地静态、坐标为近似考证值**，修正史实直接改 `src/data/`，不引入数据库。
+不包含：后端服务、账号体系、真实地图数据下载、移动 App 打包。所有史实数据**本地静态、坐标为近似考证值**，修正史实直接改 `src/mock/`，不引入数据库。
 
 ## 技术栈
 
@@ -24,32 +24,44 @@ index.html                     唯一前端入口（内含 #boot 预置启动屏
 src/main.js                    应用挂载 + 移除 #boot
 src/router/index.js            极简 hash 路由（intro/sandbox 双页；ROUTES 枚举单源）
 src/App.vue                    路由装配层（按路由渲染开场页/沙盘页）+ 全局快捷键
-src/styles/global.css          全部样式单源（组件内禁止 <style> 块）
+src/styles/global.css          样式入口（仅 @import 清单；分片同目录，顺序即层叠顺序）
 src/core/                      跨域基础设施（不依赖业务组件）
-  constants/map.js              地图几何常量（视野/跟随zoom/箭头间距/底部预留）
-  constants/colors.js           Leaflet 图层配色（JS 侧单源）
-  constants/storage.js          localStorage 键名
+  constants/map.js              地图几何（MAP_VIEW 视野·底部预留·窄屏断点 / TRAVEL / ARROWS）
+  constants/icons.js            标记几何常量（EV_SHAPES 七轮廓 / WALKER_ICON）
+  constants/playback.js         播放引擎参数（PLAYBACK / FOLLOW 跟随缩放档）
+  constants/history.js          史实域常量（EVENT_INDEX 会师星标 id）
+  constants/colors.js           Leaflet 图层配色（JS 侧单源，含 GOLD_COLOR）
+  constants/storage.js          localStorage 键名（STORAGE.PREFS）
+  constants/ui.js               跨模块兜底时长（FALLBACKS：镜头飞行/toast 驻留）
   enums/index.js                UI 枚举（MARKER_MODE/LANG）
   i18n/                         列式词典引擎（zhCN 基础键源 + en Partial + t()）
-src/utils/geo.js               时间/地理工具：parseDate（记忆化）、endOfDay、样条加密、positionAt
+src/utils/                     无状态纯工具（归类索引见 utils/README.md）
+  geo.js                       位置/时间/地理 barrel：parseDate（记忆化）、endOfDay、
+                               样条加密、prepareRoute、positionAt
+  date.js                      时间窗判定（inWindow 单源）与「长征第 N 天」（dayOfMarch）
+  format.js                    展示格式化（armyColor/armyName，接收数据作首参）
 src/composables/
   usePlayback.js               播放引擎单例（时间域/倍速/事件指针/seek/dt 限幅）
   useLayers.js                 图层显隐与四军实时状态
   useMapBase.js                底图配置
   usePrefs.js                  用户偏好持久化（localStorage，含语言代管）
-src/data/                      史实数据集（单源，文档在 docs/history、docs/spirit）
+src/mock/                      史实数据集（唯一单源，使用契约见 mock/README.md）
+  index.js                     barrel —— 全应用唯一引用入口
+  events/                      index.js 装配层 + catalog.js 目录契约 +
+                               n25 / red-first / red-fourth / red-second 四个部队领域文件
+  situation/                   index.js + zones / blockades / units / japan
   armies.js  routes/           四路红军元信息与带日期航点
-  events.js                    57 个关键事件（导出时按日期重排序）
   figures.js                   22 位人物（firstEvent 引用事件 id）
-  situation.js                 态势实体（全部带 from/to 时间窗）
   rivers.js                    江河要津简化走线
   stories.js strength.js quotes.js phases.js
 src/map/                       Leaflet 域逻辑模块（SandboxMap 只编排）
-  icons.js                      五类点标记 SVG 工厂 + EV_SHAPES 七轮廓
+  icons.js                      五类点标记 SVG 工厂（几何常量取 core/constants/icons）
   camera.js                     跟随镜头状态机（飞行互斥 + EMA 跟拍）
   traveled.js                   已走折线增量维护（热路径性能关键）
   arrows.js                     方向箭头增量布设
   situation.js                  态势构建 + 时间窗显隐
+src/styles/                    样式单源：global.css 为 @import 清单，按语义分 10 片
+  tokens.css                    :root 设计 token + reset（分片顺序即层叠顺序，见 docs/dev/design.md）
 src/components/                视图组件（SandboxMap/TimelineBar/EventPanel/EventIndex/ArmyLegend/...）
 docs/
   history/                     事件全录、战役志、人物志、路线志、战场态势
@@ -60,19 +72,31 @@ docs/
 ## 数据层约定
 
 - **数据文件是史实唯一单源**，`docs/` 是它的成文档化视图：改数据必须同步补 docs，反之亦然。
-- 时间窗语义统一走 `utils/geo.js` 的 `endOfDay`（to 补到当日最后一毫秒）；禁止在组件里自建 endOfDay 副本。
-- `events.js` 源码按部队分段书写，导出时按日期排序——**新增事件只管插入对应部队段落**，插入位置不影响运行时顺序。
-- 人物/事件互引用 id：`figures.js#firstEvent` → `events.js#id`；新增人物先确认目标事件存在。
+  目录归类与引用规则见 `src/mock/README.md`（**改数据前必读**）。
+- 组件取数据只走 barrel：`import { EVENTS } from '../mock'`；禁止 import 领域文件
+  （`../mock/events/red-first`）。唯一例外是 `map/situation.js`（走子 barrel `../mock/situation`）。
+- 时间窗语义统一走 `utils/date.js` 的 `inWindow`（底层 `endOfDay` 把 to 补到当日最后一毫秒）；
+  **禁止在组件里自建 endOfDay 副本或手写区间比较**。
+- 事件按部队分四个领域文件，导出时由装配层按日期排序——**新增事件只管插入对应部队文件**，
+  插入位置不影响运行时顺序。
+- 人物/事件互引用 id：`mock/figures.js#firstEvent` → `mock/events/#id`；新增人物先确认目标事件存在。
 - 坐标为省级精度近似值（小数点后两位）；修正坐标时在提交 body 注明依据。
 - 兵力锚点与 `STRENGTH_TOTAL` 口径必须自洽（出发 ≈ 8.6万+1.7万+8万+0.3万 ≈ 18.6 万）。
 
 ## 前端代码规范
 
 - 组件文件 PascalCase（`SandboxMap.vue`）；composable 以 `use` 开头 camelCase；与 ai-tracker-hud 不同，本仓库 Vue SFC 允许横杠仅限工具链约定文件。
-- 依赖方向：`components → composables → data → utils`；`utils/` 禁止反向依赖任何业务模块。
-- **样式只写 `src/styles/global.css`**：设计 token 在 `:root`（三级金 `--accent / --accent-soft / --gold-deep`、面板圆角/阴影），新样式先找 token，找不到先补 token 再用。
-- 播放热路径（`render()` 每 50ms 一次）禁止每帧重建大数组/新建对象；已走折线由 `updateTraveled` 增量维护，`positionAt` 传 `{ noTravel: true }`。
-- 镜头是状态机（`camBusy` 飞行互斥 + `followCam` EMA 跟拍）：改镜头逻辑前先读 `SandboxMap.vue` 相关节注释；所有镜头移动必须走 `beginCamFlight`，禁止裸调 `flyTo`。
+- 依赖方向：`components → composables → mock（数据）→ utils → core`，且 `components → map`；
+  `mock/` 与 `utils/` 禁止反向依赖任何业务模块，`core/` 不得 import `utils/` 与 `mock/`。
+- **样式只写 `src/styles/` 的分片**（组件内禁止 `<style>`）：`global.css` 是 `@import` 清单，
+  导入顺序即层叠顺序；设计 token 在 `tokens.css` 的 `:root`（三级金 `--accent / --accent-soft / --gold-deep`、
+  面板圆角/阴影），新样式先找 token，找不到先补 token 再用；分片归属见 `docs/dev/design.md`。
+- 常量按域分片放 `core/constants/`，枚举单源在 `core/enums/` 与 `mock`（史实域枚举）；
+  同一数值禁止在多处字面量重复（JS 侧配色走 `core/constants/colors.js`）。
+- 播放热路径（`render()` 每 50ms 一次）禁止每帧重建大数组/新建对象；已走折线由
+  `createTravelTracker` 增量维护，`positionAt` 传 `{ noTravel: true }`。
+- 镜头是状态机（`camera.js` 的 `busy` 飞行互斥 + EMA 跟拍）：改镜头逻辑前先读 `map/camera.js` 与
+  `SandboxMap.vue` 相关节注释；所有镜头移动必须走 `createCamera().begin()`，禁止裸调 `flyTo`。
 - 遮挡环境兼容（IAB/失焦）：涉及动画的路径必须有非 rAF 兜底；新增过渡不得依赖 `<transition>` 的 out-in。
 
 ## 通用代码与注释规范
@@ -121,12 +145,12 @@ npm run preview    # 预览 dist
 
 | scope | 范围 |
 |---|---|
-| `data` | src/data/ 史实数据集（事件/路线/人物/态势/兵力/诗词/阶段） |
+| `data` | src/mock/ 史实数据集（事件/路线/人物/态势/兵力/诗词/阶段） |
 | `engine` | 播放引擎与镜头系统（usePlayback / SandboxMap 渲染与镜头） |
 | `map` | 地图图层与地图内元素（路线/标记/态势实体/氛围特效） |
 | `ui` | 界面组件与交互（时间轴/讲解卡/索引/图例/浮层） |
 | `prefs` | 用户偏好持久化（usePrefs） |
-| `style` | global.css 设计 token 与视觉样式 |
+| `style` | src/styles/ 设计 token 与视觉样式分片 |
 | `docs` | README / docs / AGENTS.md |
 | `global` | 工程配置、依赖、构建、仓库事务 |
 
@@ -137,7 +161,8 @@ npm run preview    # 预览 dist
 ### 提交前检查清单
 
 1. `npm run build` 全绿；涉及播放/镜头/交互的改动先在 `npm run dev` 手工验收。
-2. 改 `src/data/` 时自检：`events.js` 日期排序由导出保证、`figures.js#firstEvent` 引用有效、时间窗 `from ≤ to`、兵力口径与 `STRENGTH_TOTAL` 自洽。
+2. 改 `src/mock/` 时自检（完整清单见 `src/mock/README.md`）：事件日期排序由装配层保证、
+   `figures.firstEvent` 引用有效、时间窗 `from ≤ to`、兵力口径与 `STRENGTH_TOTAL` 自洽。
 3. 数据成文档化同步：改事件/人物/态势/诗词任一数据，`docs/history/` 或 `docs/spirit/` 对应篇同一提交内更新。
 4. 注释自检：无日期、无演进叙事、无情绪词；注释引用的机制在代码里 grep 得到。
 5. 改偏好结构（usePrefs）时确认旧键兼容或 bump 存储键版本（`cz-prefs-v1`）。

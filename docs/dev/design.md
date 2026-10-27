@@ -1,6 +1,8 @@
 # 设计语言 · 指挥舱 + 羊皮纸档案
 
-> 全部样式单源在 `src/styles/global.css`；本文解释"为什么长这样"与 token 用法。
+> 样式单源在 `src/styles/`：`global.css` 只保留 `@import` 清单，按语义分为 10 个分片
+> （导入顺序即层叠顺序，见 [architecture.md](architecture.md#样式分层styles)）；
+> 设计 token 在 `tokens.css` 的 `:root`。本文解释"为什么长这样"与 token 用法。
 
 ## 双层概念
 
@@ -13,13 +15,28 @@
 | `--accent` | #d4a94e | 交互金：按钮描边/高亮/播放头 |
 | `--accent-soft` | #e8b04a | 数据金：数字/年份/统计 |
 | `--gold-deep` | #c9922e | 材质金：徽记/星章渐变端点 |
-| `--red` / `--red-deep` | #e53935 / #8e1c1c | 主色族：路线红/按钮红/事件卡顶线 |
+| `--red` / `--red-deep` | #e53935 / #8e1c1c | 主色族：路线红/按钮红/事件卡顶线（`--red` 暂无 `var()` 直接引用，作色板基准保留） |
 | `--radius-panel` / `--radius-ctrl` | 12px / 10px | 面板圆角 / 控件圆角 |
 | `--shadow-panel` | 0 8px 30px rgba(0,0,0,.5) | 面板统一阴影 |
 | `--line` / `--line-soft` / `--line-strong` | #2d3644 / #232b37 / #3a4452 | 三级描边 |
 | `--serif` / `--sans` | 宋体族 / 黑体族 | 标题-日期-数字-诗词-徽记用宋体；正文-控件用黑体 |
 
 新增样式先找 token，找不到先补 token 再用；禁止散落硬编码色值（金色尤其）。
+JS 侧需要同值时走 `core/constants/colors.js`（取值单源），不要复制字面量。
+
+**分片归属**（改动样式时按此定位文件）：
+
+| 分片 | 内容 |
+|---|---|
+| `tokens.css` | `:root` 设计 token + reset |
+| `base.css` | 顶栏 / 无障碍焦点圈 / toast / tooltip / leaflet 基础覆盖 |
+| `map.css` | 地图容器·底图滤镜·羊皮纸·罗盘·比例尺·路线·标记·小红军·箭头·态势层·雪山草地氛围 |
+| `panel-legend.css` | 部队图例 + 兵力消长 |
+| `panel-event.css` | 事件讲解卡 + 帮助卡 + 开场页要点 + 字幕诗词 |
+| `timeline.css` | 底部时间带 + 悬停预览 |
+| `panel-index.css` | 事件总览 + 人物志 |
+| `intro.css` / `finale.css` | 开场页 / 结语页（各自带断点） |
+| `responsive.css` | 全局窄屏 `@media`（**必须置末**） |
 
 ## 羊皮纸地图
 

@@ -2,7 +2,7 @@
 
 > 长征中的烈士，既有留下姓名的将领，也有大量无名牺牲的普通战士。据不完全统计，**至少有 16.6 万名红军将士战死或失散在长征途中**。本篇按类型收录部分有明确记载的烈士，并标注其在沙盘中的对应呈现。
 >
-> 数据对应：人物条目在 `src/data/figures.js`；事件挂靠在 `src/data/events.js`；精神印记故事在 `src/data/stories.js`。
+> 数据对应：人物条目在 `src/mock/figures.js`；事件挂靠在 `src/mock/events/`；精神印记故事在 `src/mock/stories.js`。
 
 ## 一、高级指挥员（军级以上）
 

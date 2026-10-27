@@ -6,7 +6,7 @@
  * armyState 由 SandboxMap.render 每帧写入（ArmyLegend 只读）。
  */
 import { reactive } from 'vue'
-import { ARMIES } from '../data/armies'
+import { ARMIES } from '../mock'
 import { prepareRoute } from '../utils/geo'
 
 // 各路军路线显隐

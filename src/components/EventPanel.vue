@@ -6,8 +6,7 @@
 <script setup>
 import { computed } from 'vue'
 import { playback, closePanel, play, openEvent, seek } from '../composables/usePlayback'
-import { EVENTS, EVENT_TYPES, DEPARTURE_DATE } from '../data/events'
-import { ARMIES } from '../data/armies'
+import { EVENTS, EVENT_TYPES, DEPARTURE_DATE, ARMIES } from '../mock'
 import { parseDate, DAY_MS } from '../utils/geo'
 import { useI18n } from '../core/i18n'
 

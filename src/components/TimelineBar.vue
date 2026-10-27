@@ -18,7 +18,7 @@ import {
   T_START,
   T_END,
 } from '../composables/usePlayback'
-import { EVENTS, EVENT_TYPES } from '../data/events'
+import { EVENTS, EVENT_TYPES } from '../mock'
 import { parseDate, formatCnDate } from '../utils/geo'
 import { useI18n } from '../core/i18n'
 

@@ -8,9 +8,7 @@
  * 写路径：各实体在其 layerGroup 内 add/remove；不写盘。
  */
 import L from 'leaflet'
-import { ZONES, KMT_BLOCKADES, KMT_UNITS, JAPAN_CRISES } from '../data/situation'
-import { RIVERS } from '../data/rivers'
-import { STORIES } from '../data/stories'
+import { ZONES, KMT_BLOCKADES, KMT_UNITS, JAPAN_CRISES, RIVERS, STORIES } from '../mock'
 import { parseDate, endOfDay } from '../utils/geo'
 import { ZONE_COLOR, BLOCKADE_COLOR, RIVER_COLOR } from '../core/constants/colors'
 import { enemyIcon, japanIcon, storyIcon } from './icons'

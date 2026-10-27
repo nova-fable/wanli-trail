@@ -3,8 +3,7 @@
   职责：点击人物 → 暂停播放并打开其 firstEvent 讲解（镜头随之飞往）。
 -->
 <script setup>
-import { FIGURES, figureColor } from '../data/figures'
-import { EVENTS } from '../data/events'
+import { FIGURES, figureColor, EVENTS } from '../mock'
 import { playback, openEvent } from '../composables/usePlayback'
 import { useI18n } from '../core/i18n'
 

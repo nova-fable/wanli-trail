@@ -5,8 +5,7 @@
 <script setup>
 import { computed } from 'vue'
 import { playback } from '../composables/usePlayback'
-import PHASES from '../data/phases'
-import { QUOTES } from '../data/quotes'
+import { PHASES, QUOTES } from '../mock'
 import { parseDate, endOfDay } from '../utils/geo'
 
 // 日期字符串按"当天之内"理解（endOfDay 统一语义，见 utils/geo.js）

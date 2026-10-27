@@ -9,7 +9,7 @@
  * 驱动：setInterval（遮挡环境可用）+ tick dt 限幅/跳帧（后台强化节流防护）。
  */
 import { reactive, markRaw } from 'vue'
-import { EVENTS } from '../data/events'
+import { EVENTS } from '../mock'
 import { parseDate, clamp, DAY_MS } from '../utils/geo'
 import { PLAYBACK } from '../core/constants/map'
 import { MARKER_MODE } from '../core/enums'

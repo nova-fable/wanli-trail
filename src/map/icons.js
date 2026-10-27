@@ -8,7 +8,7 @@
  * （.walker / .ev-mark / .kmt-flag / .jp-mark / .story-mark）在 styles/global.css。
  */
 import L from 'leaflet'
-import { EVENT_TYPES } from '../data/events'
+import { EVENT_TYPES } from '../mock'
 
 /**
  * 事件地点符号的七种轮廓（手绘军用地图符号，不规则图形 + 半透明填充）

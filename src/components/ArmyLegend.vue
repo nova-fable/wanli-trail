@@ -5,11 +5,18 @@
 -->
 <script setup>
 import { computed } from 'vue'
-import { ARMIES } from '../data/armies'
-import { ZONES, KMT_BLOCKADES, KMT_UNITS, JAPAN_CRISES } from '../data/situation'
-import { RIVERS } from '../data/rivers'
-import { STORIES } from '../data/stories'
-import { strengthAt, strengthText, STRENGTH_TOTAL } from '../data/strength'
+import {
+  ARMIES,
+  ZONES,
+  KMT_BLOCKADES,
+  KMT_UNITS,
+  JAPAN_CRISES,
+  RIVERS,
+  STORIES,
+  strengthAt,
+  strengthText,
+  STRENGTH_TOTAL,
+} from '../mock'
 import {
   armyVisible,
   toggleArmy,

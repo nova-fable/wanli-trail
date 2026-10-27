@@ -14,8 +14,7 @@
  * 4. intro-core 星徽/标题/副题/图例/入口按钮/提示/统计条
  */
 import { computed } from 'vue'
-import { ARMIES } from '../data/armies'
-import { EVENTS } from '../data/events'
+import { ARMIES, EVENTS } from '../mock'
 import { preparedRoutes } from '../composables/useLayers'
 import { useI18n } from '../core/i18n'
 

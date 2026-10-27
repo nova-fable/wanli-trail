@@ -13,7 +13,7 @@
   --accent: #d4a94e;      /* 交互金：按钮/描边/高亮 */
   --accent-soft: #e8b04a; /* 数据金：数字/年份/统计 */
   --gold-deep: #c9922e;   /* 材质金：徽记/星章渐变 */
-  --red: #e53935;
+  --red: #e53935;        /* 正红：与 --red-deep 成对的设计 token（见 docs/dev/design.md）；暂无色板外的 var() 直接引用，保留作色板基准 */
   --red-deep: #8e1c1c;
   --radius-panel: 12px;
   --radius-ctrl: 10px;

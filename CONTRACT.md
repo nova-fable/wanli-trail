@@ -28,9 +28,8 @@ src/
     i18n/                     index.js zhCN.js en.js
   utils/
     geo.js                    barrel：位置/时间/地理（唯一对外入口）
-    format.js                 「长征第 N 天」等展示格式化
-    color.js                  颜色换算（随组件去重批次落地）
-    date.js                   （可选）时间窗工具；不建则 geo 保持现名导出
+    format.js                 展示格式化（部队色/名查询等纯函数）
+    date.js                   时间窗判定（inWindow 单源）与「长征第 N 天」（dayOfMarch）
   map/                        Leaflet 域模块（icons/camera/traveled/arrows/situation）
   composables/                usePlayback/useLayers/useMapBase/usePrefs/useTimeline/useFiguresIndex
   components/
@@ -66,7 +65,7 @@ components → composables → mock(数据) ─┐
 | `WALKER_ICON` | `core/constants/icons.js` | 原 map/icons.js 内的 iconSize/anchor 魔法数 |
 | `FOLLOW` | `core/constants/playback.js` | `FOLLOW_ZOOMS` / `PLAYBACK` 并入（组件取 `FOLLOW.ZOOMS`） |
 | `EVENT_INDEX` | `core/constants/history.js` | 原 `IntroOverlay` 里的会师星标事件 id 清单 |
-| `HEX` | `utils/color.js` | `hexToRgb` / `withAlpha` / `isLightHex` |
+| ~~`HEX`~~ | ~~`utils/color.js`~~ | **已删除**：全仓 JS 侧不存在色值运算（真正的手写色值都在 CSS 字面量），零消费者 → 按「不造无人调用的工具」删除。详见 §4 附注 |
 | `ANIM`/`FALLBACKS` | `core/constants/ui.js` | 动画时长、兜底超时、断点等跨模块 UI 约定 |
 
 改名映射（批量替换表，供各 owner 使用）：
@@ -103,6 +102,14 @@ components → composables → mock(数据) ─┐
 - 时间轴/索引面板的**史实标签**（事件名、dateLabel、部队名）不键化。
 - 数值常量（`4`/`14`/`761`）从数据推导，禁止硬编码：路数 = `ARMIES.length`，
   省数 = 四路 `provinces` 去重并集，天数 = `T_END - T_START` 折算。
+
+## 4.1 附注：为什么没有 utils/color.js
+
+批次背景曾假设「多处 hex→rgba / 颜色加减亮度的手写换算」需要收敛。实测**该重复项不存在**：
+全仓 JS 中没有任何色值运算，真正的手写色值都在 `src/styles/**` 的 CSS 字面量里。
+故 `color.js` 建了又删——保留一个零调用方模块违反「不造无人调用的工具」。
+真出现调用方时再建，与 `core/constants/colors.js`（**取值**单源）分工：前者算，后者存。
+此条同时修正批次任务书中的错误前提，后续批次不得再引用该前提。
 
 ## 5. CSS 拆分契约
 

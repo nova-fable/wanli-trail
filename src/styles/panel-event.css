@@ -117,14 +117,6 @@
   transition: filter 0.15s;
 }
 .btn-primary:hover { filter: brightness(1.2); }
-.btn-ghost {
-  padding: 9px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--text-dim);
-  border: 1px solid var(--line);
-}
-.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
 
 
 /* ===== 帮助按钮与操作指南卡 ===== */

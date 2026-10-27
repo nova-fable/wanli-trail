@@ -1,0 +1,149 @@
+/* panel-index.css · 事件总览 + 人物志 + 通用浮层（toast/tooltip） */
+
+.event-index {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: 322px;
+  max-height: calc(100% - 142px);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: slide-in 0.25s ease;
+  transition: right 0.25s ease;
+}
+.event-index.shifted { right: 356px; }
+.ei-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 12px 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ei-filters button {
+  font-size: 10.5px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  color: var(--text-dim);
+  transition: all 0.15s;
+}
+.ei-filters button:hover { color: var(--text); }
+.ei-filters button.on {
+  color: var(--accent);
+  border-color: rgba(212, 169, 78, 0.5);
+  background: rgba(212, 169, 78, 0.1);
+}
+.ei-list { overflow-y: auto; padding: 6px 8px 10px; }
+.ei-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.ei-item:hover { background: rgba(255, 255, 255, 0.05); }
+.ei-item.now { background: rgba(212, 169, 78, 0.1); box-shadow: inset 2px 0 0 var(--accent); }
+.ei-item.future { opacity: 0.42; }
+.ei-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ei-idx { font-size: 10px; color: var(--text-dim); width: 20px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+.ei-name { font-size: 12.5px; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ei-date { font-size: 10px; color: var(--text-dim); flex: none; }
+
+
+/* 事件面板的人物徽章 */
+.ep-people { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ep-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-soft);
+  padding: 3px 10px 3px 4px;
+  border-radius: 20px;
+}
+.ep-person i {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #14181f;
+  font-style: normal;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 1.5px solid rgba(245, 226, 196, 0.75);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.ep-day { color: var(--accent); }
+
+/* 人物志面板 */
+.figures-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: 302px;
+  max-height: calc(100% - 142px);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: slide-in 0.25s ease;
+  transition: right 0.25s ease;
+}
+.figures-panel.shifted { right: 356px; }
+.fp-head { display: flex; align-items: center; padding: 12px 14px 8px; }
+.fp-head h4 {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+.fp-head .ep-close { margin-left: auto; }
+.fp-list { overflow-y: auto; padding: 0 8px 10px; }
+.fp-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.fp-item:hover { background: rgba(255, 255, 255, 0.05); }
+.fp-avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  margin-top: 2px;
+}
+.fp-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.fp-role { font-size: 10px; color: var(--accent); font-weight: 400; margin-left: 6px; }
+.fp-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; margin-top: 3px; }
+

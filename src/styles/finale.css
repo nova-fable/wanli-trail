@@ -1,0 +1,131 @@
+/* finale.css · 结语页 + 精神印记书签 */
+
+/* ===== 精神印记书签：静态金色书签（动画只留给当前事件，避免注意力摊薄） ===== */
+.story-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px 7px 7px 2px;
+  background: radial-gradient(circle at 35% 30%, #f0d98c, var(--gold-deep));
+  border: 2px solid #8a6f4d;
+  color: #5b3d00;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.story-mark:hover { transform: scale(1.2); }
+
+
+/* ===== 长征精神结语页 ===== */
+.finale-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(233, 214, 172, 0.07), transparent 45%),
+    radial-gradient(ellipse at 50% 20%, rgba(150, 35, 30, 0.4), transparent 60%),
+    linear-gradient(165deg, #131013 0%, #1e1216 55%, #0d1015 100%);
+  overflow-y: auto;
+  animation: intro-in 0.8s ease;
+}
+.finale-scroll {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 56px 28px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.finale-star { font-size: 30px; color: #e53935; text-shadow: 0 0 26px rgba(229, 57, 53, 0.7); }
+.finale-title {
+  font-family: var(--serif);
+  font-size: clamp(40px, 6vw, 60px);
+  letter-spacing: 22px;
+  text-indent: 22px;
+  color: #f0e9d8;
+  margin-top: 10px;
+}
+.finale-sub { margin-top: 12px; font-size: 13px; color: #9d937d; letter-spacing: 3px; }
+.finale-spirits {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 620px;
+  text-align: left;
+}
+.spirit-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 169, 78, 0.22);
+  border-radius: var(--radius-panel);
+  padding: 12px 18px;
+}
+.sp-tag {
+  flex: none;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  width: 82px;
+}
+.sp-text { font-size: 13px; line-height: 1.75; color: #d5cdb8; }
+.finale-nums {
+  margin-top: 38px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 720px;
+}
+.num-item {
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.25);
+  border-radius: var(--radius-panel);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.num-main { font-family: var(--serif); font-size: 15px; color: #f2d5c9; letter-spacing: 1px; }
+.num-sub { font-size: 11px; color: #9d8f85; }
+.finale-poem { margin-top: 42px; }
+.poem-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 3px;
+  margin-bottom: 14px;
+}
+.poem-title span { font-size: 11px; color: #9d937d; letter-spacing: 1px; margin-left: 10px; }
+.finale-poem p {
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: 4px;
+  color: #ece4cf;
+  line-height: 2.1;
+}
+.finale-quote {
+  margin-top: 36px;
+  max-width: 620px;
+  font-size: 13px;
+  line-height: 2;
+  color: #c9c0aa;
+  font-style: normal;
+}
+.finale-quote span { display: block; margin-top: 6px; font-size: 11px; color: #9d937d; }
+.finale-actions { display: flex; gap: 14px; margin-top: 44px; flex-wrap: wrap; justify-content: center; }
+
+/* 顶栏长征精神按钮 */
+.pill-toggle.finale-btn { border-color: rgba(212, 169, 78, 0.45); color: var(--accent); }
+.pill-toggle.finale-btn:hover { border-color: var(--accent); background: rgba(212, 169, 78, 0.1); }

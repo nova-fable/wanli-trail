@@ -4,7 +4,8 @@
  * 领域数据在 ./n25.js / ./red-first.js / ./red-fourth.js / ./red-second.js；本文件负责三件事：
  * 1. 类型元数据 EVENT_TYPES 与派生量 DEPARTURE_DATE
  * 2. 装配：合并四路事件 → 按日期升序排序 → 回填 ./catalog.js 的绑定
- * 3. 派生视图：eventMeta / eventIndexOf / eventDayNumber
+ * 3. 派生视图：eventMeta / eventIndexOf（纯展示派生，不含时间计算——
+ *    「长征第 N 天」需要 parseDate，属 utils/date.js#dayOfMarch，避免 mock 反向依赖 utils）
  *
  * 为什么事件对象来自 ./catalog.js（而非直接 import 领域文件）：
  * figures.js / strength.js 需要引用事件 id 与人名，若直接 import 本文件会形成
@@ -22,7 +23,7 @@ import redSecondEvents from './red-second'
 
 /**
  * 事件类型元数据：`label` 展示名 / `mark` 地图书法单字徽记（宋体，替代跨平台不稳的 emoji）/
- * `color` 类型色（地图符号与时间轴刻度同源，见 map/icons.js 的 EV_SHAPES 轮廓表）
+ * `color` 类型色（地图符号与时间轴刻度同源，见 core/constants/icons.js 的 EV_SHAPES 轮廓表）
  */
 export const EVENT_TYPES = {
   depart: { label: '出发', mark: '出', color: '#e05c3f' },

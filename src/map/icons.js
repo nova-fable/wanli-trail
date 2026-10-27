@@ -2,51 +2,17 @@
  * @file Leaflet 图标工厂（地图内全部点标记的视觉定义）
  *
  * 职责：walkerIcon / eventIcon / enemyIcon / japanIcon / storyIcon 五类 divIcon 的
- * SVG 组装；几何形状常量 EV_SHAPES 也在此（形状属图标域，不进 core/constants）。
+ * SVG 组装；形状常量 EV_SHAPES 与 WALKER_ICON 已迁 core/constants/icons，本文件只兼容转出
+ * （消费方仍可 `import { EV_SHAPES } from '../map/icons'`）。
  * 数据来源：EVENT_TYPES（类型徽记 mark/color）、ARMIES（部队配色）。
  * 写路径：纯函数返回 L.divIcon，由 SandboxMap 组装进图层；样式钩子
- * （.walker / .ev-mark / .kmt-flag / .jp-mark / .story-mark）在 styles/global.css。
+ * （.walker / .ev-mark / .kmt-flag / .jp-mark / .story-mark）在 styles/map.css。
  */
 import L from 'leaflet'
 import { EVENT_TYPES } from '../mock'
+import { EV_SHAPES, WALKER_ICON } from '../core/constants/icons'
 
-/**
- * 事件地点符号的七种轮廓（手绘军用地图符号，不规则图形 + 半透明填充）
- * 键 = 事件类型；size 画布 / anchor 锚点（尖端即事件坐标）/ tx,ty 徽记单字中心
- * （星形不置字）/ art 轮廓 SVG 片段（fill 走 .ev-plate/.ev-star 样式）
- */
-export const EV_SHAPES = {
-  depart: {
-    size: [34, 44], anchor: [9, 42], tx: 13.5, ty: 15.6,
-    art: `<line class="ev-pole" x1="9" y1="41" x2="9" y2="4"/>
-      <ellipse class="ev-ground" cx="9" cy="41.5" rx="2.4" ry="1"/>
-      <path class="ev-plate" d="M10 4 L30 11.5 L10 19 Z"/>`,
-  },
-  battle: {
-    size: [30, 31], anchor: [15, 29], tx: 15, ty: 15.5,
-    art: `<path class="ev-plate" d="M2 3 h26 v9 c0 8 -8 13.5 -13 17 c-5 -3.5 -13 -9 -13 -17 z"/>`,
-  },
-  meeting: {
-    size: [30, 30], anchor: [15, 28], tx: 15, ty: 19.5,
-    art: `<path class="ev-plate" d="M8 2 h14 l6 6 v14 l-6 6 h-14 l-6 -6 v-14 z"/>`,
-  },
-  join: {
-    size: [30, 30], anchor: [15, 27.5],
-    art: `<path class="ev-star" d="M15 1.5 L18.41 10.81 L28.31 11.17 L20.52 17.29 L23.23 26.83 L15 21.3 L6.77 26.83 L9.48 17.29 L1.69 11.17 L11.59 10.81 Z"/>`,
-  },
-  pass: {
-    size: [32, 30], anchor: [16, 27], tx: 16.5, ty: 24.5,
-    art: `<path class="ev-plate" d="M1 27 L10.5 9 L15.5 17 L21 5 L31 27 Z"/>`,
-  },
-  arrive: {
-    size: [28, 33], anchor: [14, 31.5], tx: 14, ty: 15.5,
-    art: `<path class="ev-plate" d="M14 1 c7.2 0 13 5.4 13 12 c0 8.6 -8.4 14.6 -13 18.5 c-4.6 -3.9 -13 -9.9 -13 -18.5 c0 -6.6 5.8 -12 13 -12 z"/>`,
-  },
-  base: {
-    size: [30, 31], anchor: [15, 31], tx: 15, ty: 18.5,
-    art: `<path class="ev-plate" d="M3 9 V26 L15 31 L27 26 V9 H22 V4 H17.5 V9 H12.5 V4 H8 V9 Z"/>`,
-  },
-}
+export { EV_SHAPES } from '../core/constants/icons'
 
 /**
  * 行军小红军图标：SVG 组合人物（帽徽/背包/行军旗/四肢）+ 部队臂章；
@@ -75,8 +41,8 @@ export function walkerIcon(army) {
       </div></div>
       <span class="w-badge">${army.short}</span>
     </div>`,
-    iconSize: [70, 88],
-    iconAnchor: [35, 74],
+    iconSize: WALKER_ICON.SIZE,
+    iconAnchor: WALKER_ICON.ANCHOR,
   })
 }
 

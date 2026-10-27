@@ -5,13 +5,13 @@
  * 数据来源：localStorage（键见 core/constants/storage）。
  * 写路径：initPrefs() 恢复一次；此后 watch 汇聚所有偏好变化统一 write()。
  *
- * 兼容性：结构变化时 bump PREFS_KEY 版本（旧键自然废弃）；读不到的键回默认值；
+ * 兼容性：结构变化时 bump STORAGE.PREFS 版本（旧键自然废弃）；读不到的键回默认值；
  * try/catch 兼容隐私模式（存储被禁时静默降级为内存态）。
  */
 import { ref, watch } from 'vue'
 import { playback } from './usePlayback'
 import { armyVisible, situationVisible } from './useLayers'
-import { PREFS_KEY } from '../core/constants/storage'
+import { STORAGE } from '../core/constants/storage'
 import { MARKER_MODE } from '../core/enums'
 import { useI18n, initI18n } from '../core/i18n'
 
@@ -23,7 +23,7 @@ const { lang: langState } = useI18n()
 /** 读取整包偏好；解析失败视为空（旧/坏数据兜底） */
 function read() {
   try {
-    return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')
+    return JSON.parse(localStorage.getItem(STORAGE.PREFS) || '{}')
   } catch {
     return {}
   }
@@ -33,7 +33,7 @@ function read() {
 function write() {
   try {
     localStorage.setItem(
-      PREFS_KEY,
+      STORAGE.PREFS,
       JSON.stringify({
         basemap: playback.basemap,
         speed: playback.speed,

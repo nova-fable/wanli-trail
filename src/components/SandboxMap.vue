@@ -23,7 +23,7 @@ import { playback, openEvent, flashToast } from '../composables/usePlayback'
 import { BASEMAPS } from '../composables/useMapBase'
 import { preparedRoutes, armyVisible, armyState, situationVisible } from '../composables/useLayers'
 import { positionAt, parseDate } from '../utils/geo'
-import { CHINA_BOUNDS, VIEW_RESERVE, NARROW_BREAKPOINT } from '../core/constants/map'
+import { MAP_VIEW } from '../core/constants/map'
 import { MARKER_MODE } from '../core/enums'
 import { walkerIcon, eventIcon } from '../map/icons'
 import { createCamera } from '../map/camera'
@@ -108,7 +108,7 @@ function setBasemap(key) {
     minZoom: 4,
   })
   tileLayer.addTo(map)
-  // 底图羊皮纸化滤镜（三底图同暖色偏移，切换观感连续）见 global.css .bm-*
+  // 底图羊皮纸化滤镜（三底图同暖色偏移，切换观感连续）见 styles/map.css .bm-*
   mapEl.value.classList.remove(...BASEMAPS.map((b) => `bm-${b.key}`))
   mapEl.value.classList.add(`bm-${cfg.key}`)
 }
@@ -280,11 +280,11 @@ onMounted(() => {
   map.on('zoomend', () => render())
 
   // 初始视野必须禁用动画：页面不可见时 rAF 暂停会导致动画式中断、视野残缺
-  // 底部按窄屏/桌面预留时间带 + 字幕高度（VIEW_RESERVE 与 CSS 断点约定同值）
-  const narrow = window.innerWidth <= NARROW_BREAKPOINT
-  map.fitBounds(CHINA_BOUNDS, {
+  // 底部按窄屏/桌面预留时间带 + 字幕高度（MAP_VIEW.RESERVE 与 CSS 断点约定同值）
+  const narrow = window.innerWidth <= MAP_VIEW.NARROW_BREAKPOINT
+  map.fitBounds(MAP_VIEW.CHINA_BOUNDS, {
     paddingTopLeft: [narrow ? 12 : 30, narrow ? 12 : 30],
-    paddingBottomRight: [narrow ? 12 : 30, narrow ? VIEW_RESERVE.narrow : VIEW_RESERVE.wide],
+    paddingBottomRight: [narrow ? 12 : 30, narrow ? MAP_VIEW.RESERVE.narrow : MAP_VIEW.RESERVE.wide],
     animate: false,
   })
 

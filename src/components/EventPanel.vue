@@ -7,10 +7,15 @@
 import { computed } from 'vue'
 import { playback, closePanel, play, openEvent, seek } from '../composables/usePlayback'
 import { EVENTS, EVENT_TYPES, DEPARTURE_DATE, ARMIES } from '../mock'
-import { parseDate, DAY_MS } from '../utils/geo'
+import { parseDate } from '../utils/geo'
+import { dayOfMarch } from '../utils/date'
+import { armyColor, armyName } from '../utils/format'
 import { useI18n } from '../core/i18n'
 
 const { t } = useI18n()
+
+// 多路红军主力（army === 'all'）不是 ARMIES 成员，用固定中性金
+const ALL_ARMIES_COLOR = '#d4a94e'
 
 const ev = computed(() => playback.panelEvent)
 const typeMeta = computed(() => (ev.value ? EVENT_TYPES[ev.value.type] : null))
@@ -18,15 +23,15 @@ const idx = computed(() => (ev.value ? EVENTS.findIndex((e) => e.id === ev.value
 
 const dayText = computed(() => {
   if (!ev.value) return ''
-  const n = Math.floor((parseDate(ev.value.date) - parseDate(DEPARTURE_DATE)) / DAY_MS) + 1
+  const n = dayOfMarch(ev.value.date, DEPARTURE_DATE)
   return n > 0 ? t('ep.day', { n }) : t('ep.day.pre')
 })
 
 const armyChip = computed(() => {
   if (!ev.value) return null
-  if (ev.value.army === 'all') return { name: '多路红军主力', color: '#d4a94e' }
-  const a = ARMIES.find((x) => x.key === ev.value.army)
-  return a ? { name: a.name, color: a.color } : null
+  if (ev.value.army === 'all') return { name: '多路红军主力', color: ALL_ARMIES_COLOR }
+  const color = armyColor(ARMIES, ev.value.army)
+  return color ? { name: armyName(ARMIES, ev.value.army), color } : null
 })
 
 const showContinue = computed(() => !!playback.currentEvent)

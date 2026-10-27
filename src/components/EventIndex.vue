@@ -24,11 +24,10 @@ const filter = ref('all')
 const rows = computed(() => {
   const t = playback.time
   const f = filter.value
-  let currentId = null
-  for (const ev of EVENTS) {
-    if (parseDate(ev.date) <= t) currentId = ev.id
-    else break
-  }
+  // EVENTS 已按日期升序（mock/events 装配保证）：逆序找第一个未发生的，其前一位即当前项
+  let nextIdx = EVENTS.length
+  while (nextIdx > 0 && !(parseDate(EVENTS[nextIdx - 1].date) <= t)) nextIdx--
+  const currentId = nextIdx > 0 ? EVENTS[nextIdx - 1].id : null
   return EVENTS.filter((ev) => f === 'all' || ev.army === f).map((ev) => ({
     ev,
     past: parseDate(ev.date) <= t,

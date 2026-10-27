@@ -1,0 +1,28 @@
+/* responsive.css · 全局窄屏 @media（顶层，必须最后） */
+
+/* ===== 窄屏适配 ===== */
+@media (max-width: 900px) {
+  .app-header { gap: 10px; padding: 0 12px; }
+  .app-title { font-size: 18px; letter-spacing: 2px; }
+  .app-title .years { display: none; }
+}
+@media (max-width: 768px) {
+  .app-header { overflow-x: auto; }
+  .pill-toggle { padding: 4px 9px; font-size: 11px; }
+  .army-legend { width: 190px; font-size: 11px; }
+  .event-panel,
+  .figures-panel,
+  .event-index { width: min(330px, calc(100vw - 24px)); }
+  .figures-panel.shifted,
+  .event-index.shifted { right: 12px; }
+  .tl-hint { display: none; }
+  .timeline-dock { padding: 9px 12px 7px; gap: 5px; }
+  .tl-date .date-main { font-size: 15px; }
+  .tl-speed button { min-width: 32px; padding: 3px 6px; }
+  .map-compass { display: none; }
+  .help-btn { bottom: 200px; }
+  .help-card { bottom: 242px; width: min(268px, calc(100vw - 36px)); }
+  .subtitle-text { font-size: 13px; padding: 5px 16px; }
+  .leaflet-bottom.leaflet-right { bottom: 150px; }
+}
+

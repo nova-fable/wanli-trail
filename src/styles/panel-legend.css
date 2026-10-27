@@ -1,0 +1,28 @@
+/* panel-legend.css · 图例面板（部队图例 + 兵力消长） */
+
+/* ===== 图例：兵力消长 ===== */
+/* 底部同样预留时间带高度（同右侧三个面板），展开过长时卡内滚动 */
+.army-legend { max-height: calc(100% - 142px); overflow-y: auto; }
+.str-box { padding: 2px 4px 4px; }
+/* 出发→到达区间说明允许换行（固定宽度下不再撑开卡片） */
+.str-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.str-num {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--accent-soft);
+  letter-spacing: 1px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+.str-sub { flex: 1; min-width: 0; font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+.str-row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
+.str-name { font-size: 11px; font-weight: 700; flex: none; width: 44px; }
+.str-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.str-bar i { display: block; height: 100%; border-radius: 3px; transition: width 0.25s; }
+.str-n { font-size: 11px; color: var(--text-dim); flex: none; min-width: 38px; text-align: right; }
+

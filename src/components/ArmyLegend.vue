@@ -29,7 +29,7 @@ import { useI18n } from '../core/i18n'
 import { MARKER_MODE } from '../core/enums'
 
 const { t } = useI18n()
-import { parseDate, endOfDay } from '../utils/geo'
+import { inWindow } from '../utils/date'
 
 const collapsed = legendCollapsed
 
@@ -40,10 +40,10 @@ function statusText(a) {
   return t('legend.status.marching', { pct: s.pct })
 }
 
-// 当前时间点上各态势层活跃实体数（与地图显隐同用 endOfDay 语义，保证计数一致）
+// 当前时间点上各态势层活跃实体数（与地图显隐同用 inWindow 语义，保证计数一致）
 const counts = computed(() => {
   const t = playback.time
-  const active = (x) => parseDate(x.from) <= t && t <= endOfDay(x.to)
+  const active = (x) => inWindow(x.from, x.to, t)
   return {
     zones: ZONES.filter(active).length,
     kmt: [...KMT_BLOCKADES, ...KMT_UNITS].filter(active).length,

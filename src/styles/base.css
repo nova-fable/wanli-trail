@@ -1,0 +1,134 @@
+/* base.css · 顶栏/无障碍/通用按钮/leaflet 基础覆盖 */
+
+/* ===== 顶部栏 ===== */
+.app-header {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  background: linear-gradient(180deg, #1a2438 0%, #131c2c 100%);
+  border-bottom: 1px solid #2c3a52;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1100;
+}
+
+.app-title {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #f5f0e6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.title-star {
+  color: #e53935;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 0 14px rgba(229, 57, 53, 0.85), 0 0 4px rgba(229, 57, 53, 0.9);
+}
+.app-title .years {
+  font-size: 12px;
+  color: var(--accent-soft);
+  letter-spacing: 3px;
+  font-family: var(--sans);
+  font-weight: 400;
+}
+
+.header-spacer { flex: 1; }
+
+.seg {
+  display: flex;
+  align-items: center;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg button {
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: all 0.15s;
+}
+.seg button.on {
+  background: rgba(212, 169, 78, 0.16);
+  color: var(--accent);
+}
+.seg button + button { border-left: 1px solid var(--line); }
+
+.pill-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text-dim);
+  background: var(--bg-deep);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pill-toggle .led {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #3a4452;
+  transition: all 0.15s;
+}
+.pill-toggle.on { color: var(--text); border-color: var(--accent); }
+.pill-toggle.on .led { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+/* ===== 地图区 ===== */
+
+/* 键盘可达性：焦点圈 */
+.army-item:focus-visible,
+.fp-item:focus-visible,
+.ei-item:focus-visible,
+.tl-track:focus-visible,
+.tl-ev:focus-visible,
+.ep-close:focus-visible,
+.pill-toggle:focus-visible,
+.seg button:focus-visible,
+.tl-speed button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+
+/* toast */
+.app-toast {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  background: var(--panel);
+  border: 1px solid rgba(212, 169, 78, 0.45);
+  color: var(--accent);
+  border-radius: var(--radius-ctrl);
+  padding: 8px 18px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  box-shadow: var(--shadow-panel);
+  animation: slide-in 0.2s ease;
+}
+
+/* 事件 hover 提示 */
+.leaflet-tooltip.ev-tip {
+  background: #1a202a;
+  border: 1px solid var(--line-strong);
+  color: #e8e4d8;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+.leaflet-tooltip.ev-tip::before { border-top-color: var(--line-strong); }
+
+/* 重点事件的常驻名称标签（仿古地名牌样式见上方 .ev-label） */
+

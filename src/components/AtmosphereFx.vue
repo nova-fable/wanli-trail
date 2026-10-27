@@ -6,7 +6,9 @@
 import { computed } from 'vue'
 import { playback } from '../composables/usePlayback'
 import { parseDate, endOfDay } from '../utils/geo'
+import { inWindow } from '../utils/date'
 
+// 时间窗预解析成时间戳，每帧只走 inWindow 的数值分支（endOfDay 语义：to 含当日）
 const WINDOWS = [
   { kind: 'snow', from: '1935-06-07', to: '1935-06-28' }, // 中央红军翻夹金山等
   { kind: 'snow', from: '1936-04-25', to: '1936-06-20' }, // 红二方面军翻雪山
@@ -16,7 +18,7 @@ const WINDOWS = [
 
 const kind = computed(() => {
   const t = playback.time
-  const w = WINDOWS.find((w) => t >= w.fromT && t <= w.toT)
+  const w = WINDOWS.find((w) => inWindow(w.fromT, w.toT, t))
   return w ? w.kind : null
 })
 

@@ -1,0 +1,46 @@
+/* tokens.css · 设计 token（:root）+ reset */
+
+:root {
+  --bg: #14181f;
+  --bg-deep: #0d1015;
+  --panel: rgba(22, 27, 35, 0.92);
+  --panel-solid: #1a202a;
+  --line: #2d3644;
+  --line-soft: #232b37;
+  --line-strong: #3a4452;
+  --text: #e8e4d8;
+  --text-dim: #9aa3b0;
+  --accent: #d4a94e;      /* 交互金：按钮/描边/高亮 */
+  --accent-soft: #e8b04a; /* 数据金：数字/年份/统计 */
+  --gold-deep: #c9922e;   /* 材质金：徽记/星章渐变 */
+  --red: #e53935;
+  --red-deep: #8e1c1c;
+  --radius-panel: 12px;
+  --radius-ctrl: 10px;
+  --shadow-panel: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --serif: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', serif;
+  --sans: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #app { height: 100%; }
+html { overflow: hidden; }
+#app { display: flex; flex-direction: column; position: relative; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--sans);
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+

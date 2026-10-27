@@ -7,12 +7,12 @@
  *
  * 方案：每个军持有持久数组，只追加/改队尾——
  * - 跨过加密点：旧队尾修正为真实途经点，补齐新段，以当前位置收尾
- * - 同段推进：队尾偏移超过 TRAVEL_TAIL_EPS（≈1km）才刷新（限流 setLatLngs）
+ * - 同段推进：队尾偏移超过 TRAVEL.TAIL_EPS（≈1km）才刷新（限流 setLatLngs）
  * - 完成：缓存最终满数组短路；未出发/回拨：清空或按需重建
  *
  * 写路径：三条折线（casing 衬底 / traveled 主线 / flow 流动虚线）的 setLatLngs。
  */
-import { TRAVEL_TAIL_EPS } from '../core/constants/map'
+import { TRAVEL } from '../core/constants/map'
 
 /**
  * 为一支军建立折线跟踪器
@@ -81,7 +81,7 @@ export function createTravelTracker(lines) {
     }
     // 同段推进：队尾偏移超过阈值才刷新（限流 setLatLngs 频率）
     const tail = arr[arr.length - 1]
-    if (Math.abs(tail[0] - pos.head[0]) + Math.abs(tail[1] - pos.head[1]) > TRAVEL_TAIL_EPS) {
+    if (Math.abs(tail[0] - pos.head[0]) + Math.abs(tail[1] - pos.head[1]) > TRAVEL.TAIL_EPS) {
       tail[0] = pos.head[0]
       tail[1] = pos.head[1]
       setLines(arr)

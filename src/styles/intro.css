@@ -1,0 +1,182 @@
+/* intro.css · 开场页（含自身 @media） */
+
+/* ===== 开场遮罩 ===== */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(233, 214, 172, 0.07), transparent 45%),
+    radial-gradient(ellipse at 50% 30%, rgba(140, 30, 30, 0.35), transparent 60%),
+    linear-gradient(160deg, #10141b 0%, #1a1216 55%, #0d1015 100%);
+  animation: intro-in 0.8s ease;
+}
+/* 主体列：高于剪影/竖诗/印章三层装饰 */
+.intro-core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 微缩路线剪影：真实航点投影的发光线条，居中铺满（装饰层 pointer-events 关闭） */
+.intro-map {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(96vw, 132vh);
+  height: auto;
+  pointer-events: none;
+}
+
+/* 右侧竖排七律：金色宋体书法装饰（史实内容保留中文） */
+.intro-poem {
+  position: absolute;
+  right: clamp(26px, 7vw, 130px);
+  top: 50%;
+  transform: translateY(-52%);
+  writing-mode: vertical-rl;
+  display: flex;
+  gap: 20px;
+  height: min(44vh, 400px);
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 9px;
+  color: rgba(212, 169, 78, 0.58);
+  pointer-events: none;
+}
+.intro-poem .p-from {
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: rgba(185, 168, 126, 0.45);
+  align-self: flex-end;
+}
+
+/* 右下"长征"方印：仿朱文印，微旋转 */
+.intro-seal {
+  position: absolute;
+  right: clamp(30px, 8vw, 150px);
+  bottom: clamp(36px, 12vh, 130px);
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(255, 220, 205, 0.92);
+  background: rgba(142, 28, 28, 0.32);
+  border: 2px solid rgba(229, 57, 53, 0.7);
+  border-radius: 6px;
+  transform: rotate(6deg);
+  pointer-events: none;
+}
+
+/* 羊皮纸噪点材质：与地图底图同一张"纸" */
+.intro-overlay::after,
+.finale-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+}
+@keyframes intro-in { from { opacity: 0; } to { opacity: 1; } }
+.intro-star { font-size: 40px; color: #e53935; text-shadow: 0 0 30px rgba(229, 57, 53, 0.8); margin-bottom: 18px; }
+.intro-title {
+  font-family: var(--serif);
+  font-size: clamp(48px, 9vw, 88px);
+  letter-spacing: 26px;
+  text-indent: 26px;
+  color: #f0e9d8;
+  text-shadow: 0 4px 30px rgba(229, 57, 53, 0.35);
+}
+.intro-sub {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: 8px;
+  color: #b9b19c;
+}
+/* 两侧渐隐金线：档案封面的题签装饰 */
+.intro-sub::before,
+.intro-sub::after {
+  content: '';
+  width: clamp(36px, 6vw, 96px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 169, 78, 0.5));
+}
+.intro-sub::after { transform: scaleX(-1); }
+.intro-armies {
+  display: flex;
+  gap: 26px;
+  margin-top: 40px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.intro-armies span { display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
+.intro-armies i { width: 22px; height: 5px; border-radius: 3px; display: inline-block; }
+.intro-actions { display: flex; gap: 16px; margin-top: 52px; }
+.btn-tour {
+  padding: 14px 44px;
+  font-size: 17px;
+  letter-spacing: 6px;
+  text-indent: 6px;
+  font-family: var(--serif);
+  color: #fff;
+  background: linear-gradient(135deg, #c62828, #8e1c1c);
+  border: 1px solid #e07070;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(198, 40, 40, 0.4);
+  transition: all 0.2s;
+}
+.btn-tour:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(198, 40, 40, 0.55); }
+.btn-explore {
+  padding: 14px 34px;
+  font-size: 15px;
+  letter-spacing: 4px;
+  font-family: var(--serif);
+  color: #d5cdb8;
+  border: 1px solid #4a4f5a;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.btn-explore:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+.intro-stats {
+  margin-top: 30px;
+  display: flex;
+  gap: clamp(20px, 3.4vw, 40px);
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: #8a93a3;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.intro-stats b {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--accent-soft);
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+/* 窄屏：收起书法装饰（剪影保留但更淡） */
+@media (max-width: 960px) {
+  .intro-poem, .intro-seal { display: none; }
+  .intro-map { opacity: 0.7; }
+}
+

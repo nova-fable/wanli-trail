@@ -26,6 +26,8 @@ import { EVENTS } from './mock'
 import { initPrefs } from './composables/usePrefs'
 import { route, navigate, initRouter, ROUTES } from './router'
 import { useI18n } from './core/i18n'
+// DAY_MS 单源在 utils：本文件此前自带一份 86400000 字面量副本
+import { DAY_MS } from './utils/geo'
 
 // 恢复用户偏好（底图/倍速/开关/图层/图例折叠/语言），需在子组件挂载前完成
 initPrefs()
@@ -48,9 +50,6 @@ watch(
     if (v && playback.started) showFinale.value = true
   },
 )
-
-/** 一天的毫秒数（快捷键 ±7 天步长用） */
-const DAY_MS = 86400000
 
 /**
  * 开场页入口回调：按所选模式初始化播放状态并进入沙盘路由

@@ -9,10 +9,10 @@
  */
 import L from 'leaflet'
 import { haversineKm } from '../utils/geo'
-import { ARROW_STEP, ARROW_DENSE_ZOOM } from '../core/constants/map'
+import { ARROWS } from '../core/constants/map'
 
 /** 缩放档位 → 箭头里程间距：低倍率大间距，省级视野加密保证可见 */
-export const arrowStepFor = (zoom) => (zoom >= ARROW_DENSE_ZOOM ? ARROW_STEP.NEAR : ARROW_STEP.FAR)
+export const arrowStepFor = (zoom) => (zoom >= ARROWS.DENSE_ZOOM ? ARROWS.STEP.NEAR : ARROWS.STEP.FAR)
 
 /**
  * 在 a→b 段末尾布一枚箭头（屏幕旋转角 = 方位角，自北顺时针）

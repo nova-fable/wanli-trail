@@ -1,6 +1,6 @@
 /**
  * @file 底图配置（免 key 瓦片源单例）
- * 约定：三种底图共用暖色羊皮纸滤镜（global.css .bm-*），名称展示于顶栏切换器。
+ * 约定：三种底图共用暖色羊皮纸滤镜（styles/map.css .bm-*），名称展示于顶栏切换器。
  */
 // 底图配置（全部免 key）
 export const BASEMAPS = [

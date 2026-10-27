@@ -1,0 +1,227 @@
+/* panel-event.css · 事件讲解卡 + 帮助卡 + 开场页要点提示 + 字幕诗词 */
+
+/* ===== 事件面板 ===== */
+.event-panel {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 1000;
+  width: 330px;
+  /* 底部预留全宽时间带（约 110px + 间隙），长内容在卡内滚动而不被其遮挡 */
+  max-height: calc(100% - 142px);
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--red-deep);
+  border-radius: var(--radius-panel);
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-panel);
+  animation: slide-in 0.25s ease;
+}
+@keyframes slide-in {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.ep-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ep-type {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  color: #fff;
+  background: var(--tc, #e53935);
+  letter-spacing: 1px;
+}
+.ep-close {
+  font-size: 15px;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.ep-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+.ep-k {
+  font-style: normal;
+  font-family: var(--serif);
+  color: var(--accent);
+  font-size: 11px;
+  margin-right: 5px;
+}
+.ep-name {
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.ep-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.ep-meta b { color: var(--text); font-weight: 600; }
+.ep-army {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text);
+}
+.ep-army .dot { width: 10px; height: 10px; border-radius: 50%; }
+.ep-desc {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #cfc9bb;
+  text-align: justify;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+}
+.ep-actions { display: flex; gap: 8px; margin-top: 14px; }
+.ep-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.ep-nav button {
+  padding: 3px 10px;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-dim);
+}
+.ep-nav button:hover { color: var(--text); border-color: var(--accent); }
+.ep-nav .pos { margin: 0 auto; }
+
+.btn-primary {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #fff;
+  background: linear-gradient(135deg, #c62828, #8e1c1c);
+  border: 1px solid #e07070;
+  transition: filter 0.15s;
+}
+.btn-primary:hover { filter: brightness(1.2); }
+.btn-ghost {
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+
+/* ===== 帮助按钮与操作指南卡 ===== */
+.help-btn {
+  position: absolute;
+  right: 18px;
+  bottom: 292px;
+  z-index: 940;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(16, 20, 27, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  transition: all 0.15s;
+}
+.help-btn:hover { color: var(--accent); border-color: rgba(212, 169, 78, 0.5); }
+.help-card {
+  position: absolute;
+  right: 18px;
+  bottom: 334px;
+  z-index: 1200;
+  width: 268px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  animation: slide-in 0.2s ease;
+}
+.help-card h5 {
+  font-family: var(--serif);
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.hk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  padding: 3px 0;
+}
+.hk-row kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 10.5px;
+  color: var(--text);
+  margin-left: 4px;
+}
+.help-card .hk-sec {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 11px;
+  color: #7d8798;
+  line-height: 1.7;
+}
+
+/* ===== 开场页要点提示 ===== */
+.intro-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 28px;
+  font-size: 12px;
+  color: #8a93a3;
+  letter-spacing: 1.5px;
+  text-align: center;
+}
+
+
+/* ===== 字幕诗词行：与字幕同族胶囊，保证金字在羊皮纸暖底上的可读性 ===== */
+.subtitle-stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.subtitle-quote {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  background: rgba(13, 16, 21, 0.55);
+  border: 1px solid rgba(212, 169, 78, 0.35);
+  border-radius: 16px;
+  padding: 3px 20px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85), 0 0 14px rgba(212, 169, 78, 0.35);
+  animation: quote-in 0.8s ease;
+}
+.subtitle-quote .q-note { font-size: 11px; color: #b9a87e; margin-left: 10px; letter-spacing: 1px; }
+@keyframes quote-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+

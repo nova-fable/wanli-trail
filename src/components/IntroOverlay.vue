@@ -16,6 +16,7 @@
 import { computed } from 'vue'
 import { ARMIES, EVENTS } from '../mock'
 import { preparedRoutes } from '../composables/useLayers'
+import { EVENT_INDEX } from '../core/constants/history'
 import { useI18n } from '../core/i18n'
 
 const { t } = useI18n()
@@ -46,7 +47,7 @@ const routePaths = computed(() =>
 
 /** 会师/落脚金星标（会宁/将台堡/吴起镇/永坪——长征的四个"终点感"坐标） */
 const starMarks = computed(() =>
-  ['grand-huining', 'grand-jiangtaipu', 'f1-wuqizhen', 'n25-yongping']
+  EVENT_INDEX
     .map((id) => EVENTS.find((e) => e.id === id))
     .filter(Boolean)
     .map((ev) => {

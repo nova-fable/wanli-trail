@@ -1,3 +1,20 @@
+/**
+ * @file 位置 / 时间 / 地理工具（barrel 入口）
+ *
+ * 职责：三类本文件即完整实现的工具，对外是 `utils/` 的稳定入口——
+ * 1. 时间基元：`DAY_MS`、`parseDate`（东八区零点，带记忆化）、`endOfDay`（to 含当日）、`formatCnDate`
+ * 2. 地理：`haversineKm`、`catmullRomDensify`、`prepareRoute`、`positionAt`（播放大循环按段查找）
+ * 3. 纯数学杂项：`clamp`（只此一处，不单独开模块）
+ *
+ * 拆到同目录其他文件的工具：时间窗/天数 → `./date.js`，展示格式化 → `./format.js`
+ * （归类判定规则见 `./README.md`）。
+ *
+ * 边界：
+ * - `parseDate` 的记忆化**不可移除**：日期串是有限集合，播放时每秒调用数千次，
+ *   去掉会让热路径退化为每秒数千次 `new Date` 解析；返回值为时间戳（number），
+ *   不可被误当作可变的 Date 实例使用。
+ * - 本模块禁止 import `mock/` `composables/` `components/` `map/`（CONTRACT.md §2）。
+ */
 export const DAY_MS = 86400000
 
 // 'YYYY-MM-DD' → 东八区时间戳（带记忆化：日期串是有限集合，热路径每秒调用数千次）

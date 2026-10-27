@@ -11,7 +11,7 @@
 import { reactive, markRaw } from 'vue'
 import { EVENTS } from '../mock'
 import { parseDate, clamp, DAY_MS } from '../utils/geo'
-import { PLAYBACK } from '../core/constants/map'
+import { PLAYBACK } from '../core/constants/playback'
 import { MARKER_MODE } from '../core/enums'
 
 export const T_START = parseDate('1934-10-01')

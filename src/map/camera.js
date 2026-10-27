@@ -12,10 +12,11 @@
  * - anchor：跟拍平滑锚点（镜头中心 EMA）；丢失时从当前视野中心起步平滑收拢
  * - targetKey：当前跟随部队；换部队且相距较远时先飞往再接管
  */
-import { FOLLOW_ZOOMS } from '../core/constants/map'
+import { FOLLOW } from '../core/constants/playback'
+import { FALLBACKS } from '../core/constants/ui'
 
 /** 跟随缩放档位：倍速越高视野越广 */
-const followZoomFor = (speed) => FOLLOW_ZOOMS[speed] || FOLLOW_ZOOMS[1]
+const followZoomFor = (speed) => FOLLOW.ZOOMS[speed] || FOLLOW.ZOOMS[1]
 
 /**
  * 创建镜头控制器（每个地图实例一份）
@@ -65,7 +66,7 @@ export function createCamera(ctx) {
 
   /**
    * 统一飞行入口：flyTo 平滑拉推；飞行期间挂起跟拍；
-   * moveend 正常释放 + (dur+0.8)s 超时兜底（遮挡环境 rAF/动画冻结时保证落位）
+   * moveend 正常释放 + dur + FALLBACKS.CAMERA_FLY_MS 超时兜底（遮挡环境 rAF/动画冻结时保证落位）
    * @param {[number, number]} target [lat, lng]
    * @param {number} zoom 目标缩放
    * @param {number} [dur=1.5] 飞行时长（秒）
@@ -84,7 +85,7 @@ export function createCamera(ctx) {
       end(false)
       ctx.getMap().setView(target, zoom, { animate: false })
       anchor = null
-    }, (dur + 0.8) * 1000)
+    }, dur * 1000 + FALLBACKS.CAMERA_FLY_MS)
   }
 
   /**

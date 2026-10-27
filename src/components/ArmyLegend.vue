@@ -27,6 +27,7 @@ import { playback } from '../composables/usePlayback'
 import { legendCollapsed } from '../composables/usePrefs'
 import { useI18n } from '../core/i18n'
 import { MARKER_MODE } from '../core/enums'
+import { ZONE_COLOR, GOLD_COLOR, RIVER_COLOR } from '../core/constants/colors'
 
 const { t } = useI18n()
 import { inWindow } from '../utils/date'
@@ -55,11 +56,11 @@ const counts = computed(() => {
 
 // 态势条目元数据：文案走词典（随语言重算）；color 是视觉域常量
 const SITUATION_ITEMS = [
-  { key: 'zones', color: '#c62828' },
+  { key: 'zones', color: ZONE_COLOR },
   { key: 'kmt', color: '#546e7a' },
   { key: 'japan', color: '#8e2020' },
-  { key: 'stories', color: '#d4a94e' },
-  { key: 'rivers', color: '#2f7fbf' },
+  { key: 'stories', color: GOLD_COLOR },
+  { key: 'rivers', color: RIVER_COLOR },
 ].map((it) => ({
   ...it,
   name: t(`legend.item.${it.key}.name`),

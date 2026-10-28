@@ -21,7 +21,9 @@ import 'leaflet/dist/leaflet.css'
 import { ARMIES, EVENTS } from '../mock'
 import { playback, openEvent, flashToast } from '../composables/usePlayback'
 import { BASEMAPS } from '../composables/useMapBase'
-import { preparedRoutes, armyVisible, armyState, situationVisible } from '../composables/useLayers'
+import { armyVisible, situationVisible } from '../composables/useLayers'
+import { preparedRoutes } from '../composables/useRoutes'
+import { armyStatus, publishArmyDisplay } from '../composables/useArmyStatus'
 import { positionAt, parseDate } from '../utils/geo'
 import { MAP_VIEW } from '../core/constants/map'
 import { MARKER_MODE } from '../core/enums'
@@ -52,7 +54,7 @@ const camera = createCamera({
   getMap: () => map,
   container: () => mapEl.value,
   playback,
-  armyState,
+  armyState: armyStatus,
   armyVisible,
   getArmyLayer: (key) => layers[key],
   orderedArmyKeys: ARMIES.map((a) => a.key),
@@ -116,6 +118,7 @@ function setBasemap(key) {
 /**
  * 每帧渲染（playback.time/playing 变化与 zoomend 触发，50ms 档）：
  * 态势显隐 → 四军（位置/折线/流动/箭头/小红军）→ 事件标记可见性 → 镜头跟拍
+ * → 行军状态冷热推送（仅可见变化才写响应式，避免 UI 被拖进逐帧重渲染）
  */
 function render() {
   const t = playback.time
@@ -129,7 +132,7 @@ function render() {
     const route = preparedRoutes[army.key]
     // noTravel：折线由 tracker 增量维护，跳过每帧全量数组分配（热路径关键）
     const pos = positionAt(route, t, { noTravel: true })
-    const st = armyState[army.key]
+    const st = armyStatus[army.key]
     st.started = pos.started
     st.done = pos.done
     st.pct = route.totalKm > 0 ? Math.round((pos.km / route.totalKm) * 100) : 0
@@ -186,6 +189,9 @@ function render() {
   }
 
   camera.tickFollow()
+
+  // 热 → 冷：只在 started/done 翻转或 pct 整数变化时写响应式对象（见 useArmyStatus）
+  publishArmyDisplay()
 }
 
 onMounted(() => {

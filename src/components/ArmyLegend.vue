@@ -2,6 +2,7 @@
   @file 左上图例面板：部队显隐 / 兵力消长 / 战场态势开关 / 标记显隐设置
   职责：汇总四军状态与态势计数（与地图同用 endOfDay 时间窗语义）；
   所有开关直写 useLayers/usePlayback 状态，由 SandboxMap 的 watch 消费。
+  性能：行军进度读 useArmyStatus 的冷层 armyDisplay，避免订阅 50ms 热路径。
 -->
 <script setup>
 import { computed } from 'vue'
@@ -17,12 +18,8 @@ import {
   strengthText,
   STRENGTH_TOTAL,
 } from '../mock'
-import {
-  armyVisible,
-  toggleArmy,
-  armyState,
-  situationVisible,
-} from '../composables/useLayers'
+import { armyVisible, toggleArmy, situationVisible } from '../composables/useLayers'
+import { armyDisplay } from '../composables/useArmyStatus'
 import { playback } from '../composables/usePlayback'
 import { legendCollapsed } from '../composables/usePrefs'
 import { useI18n } from '../core/i18n'
@@ -34,8 +31,10 @@ import { inWindow } from '../utils/date'
 
 const collapsed = legendCollapsed
 
+// 读**冷层** armyDisplay（仅在可见变化时被推送），
+// 而非 render() 每帧直写的热层——否则本组件每秒整体重渲染 20 次
 function statusText(a) {
-  const s = armyState[a.key]
+  const s = armyDisplay[a.key]
   if (!s.started) return t('legend.status.idle')
   if (s.done) return t('legend.status.done')
   return t('legend.status.marching', { pct: s.pct })

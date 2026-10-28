@@ -7,15 +7,15 @@
  * 写路径：seekRatio（拖动/点击）/ openEvent（点击事件刻度）。
  *
  * 热路径约束（AGENTS.md「播放热路径禁止每帧重建大数组/新建对象」）：
- * - `eventDots` 保持 computed：本就必须随 playback.time 重算 past 着色，重算只分配
- *   长度 = EVENTS.length（57）的小对象数组，与拆分前逐字相同，未新增每帧分配。
+ * - 事件刻度的布局骨架在模块求值期算一次；`past` 由 `watchEffect` 就地更新，
+ *   且只在已发生条数变化时才写（每帧 O(log n) 二分 + 一次整数比较，无对象分配）。
  * - `monthTicks` 保持**模块级常量**（IIFE，与原组件内写法同构）：与时间无关，
  *   全进程只算一次。刻意不写成函数（调用方每次调 = 每帧重算）也不写成 computed
  *   （多一层依赖追踪却永远不变）。年份区间由 T_START/T_END 折算，不硬编码 1934/1936。
  * - 所有时间戳经 `parseDate`（utils/geo.js 记忆化）取得，不新建 `new Date(...)`；
  *   仅 monthTicks 的年份边界用 `new Date(时间戳)` 取年号，属模块求值期的两次调用。
  */
-import { computed, ref } from 'vue'
+import { computed, reactive, ref, watchEffect } from 'vue'
 import { playback, play, pause, seekRatio, openEvent, T_START, T_END } from './usePlayback'
 import { EVENTS } from '../mock'
 import { parseDate, formatCnDate } from '../utils/geo'
@@ -26,21 +26,60 @@ const SPAN = T_END - T_START
 /** 时间戳 → 轨道百分比（事件点与月份刻度共用的几何，模块求值期定型） */
 const pctOf = (ms) => ((ms - T_START) / SPAN) * 100
 
-/** 事件刻度：相邻过近时上下交错两排，避免粘连 */
-const eventDots = computed(() => {
-  const dots = EVENTS.map((ev, i) => ({
-    ev,
-    idx: i,
-    left: pctOf(parseDate(ev.date)),
-    past: parseDate(ev.date) <= playback.time,
-    lane: 0,
-  }))
+/**
+ * 事件刻度静态骨架（模块求值期算一次）：ev / idx / left / lane / ts 全为常量。
+ * - `left` 由 parseDate（记忆化）+ pctOf 得出，只依赖静态 EVENTS
+ * - `lane` 是"相邻过近时上下交错两排"的布局结果，只依赖相邻 left 差，与时间无关
+ * - `ts` 预解析的事件时间戳，供热路径做 past 判定（避免每帧重复 parseDate）
+ * 每帧真正变化的只有 past 一个布尔量，见 eventDots。
+ */
+const DOT_SKELETON = (() => {
+  const dots = EVENTS.map((ev, i) => {
+    const ts = parseDate(ev.date)
+    return { ev, idx: i, ts, left: pctOf(ts), lane: 0 }
+  })
   let prev = null
   for (const d of dots) {
     if (prev !== null && d.left - prev.left < 1.25 && prev.lane === 0) d.lane = 1
     prev = d
   }
   return dots
+})()
+
+/**
+ * 已越过事件数（二分；DOT_SKELETON 按时间升序，与 EVENTS 同序）。
+ * 与 SandboxMap.countPassed 同构：EVENTS 已由 mock 装配层按 date 升序保证。
+ */
+function countPassed(t) {
+  let lo = 0
+  let hi = DOT_SKELETON.length
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+    if (DOT_SKELETON[mid].ts <= t) lo = mid + 1
+    else hi = mid
+  }
+  return lo
+}
+
+/**
+ * 事件刻度（模板消费 ev/idx/left/lane/past）。
+ *
+ * 只有 `past` 随播放变化，而 left/lane/ev/idx 是布局常量，故：
+ * - 骨架在模块求值期算一次（parseDate 记忆化 + 交错扫描都不进热路径）
+ * - past 用 `watchEffect` 就地写到响应式数组上，且**只在已发生条数变化时**才写
+ *   （countPassed 是 O(log n) 二分），把每帧的 57 次对象分配降为一次整数比较
+ *
+ * 用 watchEffect 而非 computed 的原因：这里要写响应式状态（dotState[i].past），
+ * 在 computed 的求值函数里改状态属反模式——依赖可能自触发，且缓存语义不清。
+ */
+const dotState = reactive(DOT_SKELETON.map((d) => ({ ...d, past: false })))
+let lastPassed = -1
+
+watchEffect(() => {
+  const passed = countPassed(playback.time)
+  if (passed === lastPassed) return
+  for (let i = 0; i < dotState.length; i++) dotState[i].past = i < passed
+  lastPassed = passed
 })
 
 /** 月份刻度尺：每月小刻度，一月（年份）大刻度；年份范围由时间域折算 */
@@ -139,7 +178,7 @@ export function useTimeline() {
     hoverDot,
     hoverRatio,
     hoverDate,
-    eventDots,
+    eventDots: dotState,
     monthTicks,
     yearTicks,
     onDotEnter,

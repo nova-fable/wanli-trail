@@ -15,12 +15,14 @@ export default {
   'pill.index': '事件总览',
   'pill.finale': '★ 长征精神',
   'pill.restart': '↻ 重新播放',
+  'pill.terrain3d': '3D 地形',
   'tip.follow': '播放时镜头跟随部队推进（拖动地图会自动关闭）',
   'tip.autoTour': '播放跨越关键事件时自动暂停并讲解',
   'tip.figures': '查看长征关键人物志，点击人物跳转其登场事件',
   'tip.index': '{n} 个关键事件总览，点击条目跳转讲解',
   'tip.finale': '查看长征精神结语：五大精神 · 数说长征 · 七律长征',
   'tip.restart': '回到 1934 年 10 月重新播放',
+  'tip.terrain3d': '打开夹金山与松潘草地的 3D 地形预览',
   'tip.basemap': '切换底图',
   'tip.compass': '上北下南',
 
@@ -129,4 +131,11 @@ export default {
 
   // ===== 语言 =====
   'lang.label': '语言',
+  'terrain3d.title': '长征地形 · 3D 预览',
+  'terrain3d.note': '地形预览实验功能 · 拖动旋转，滚轮缩放',
+  'terrain3d.scene.jiajin': '夹金山',
+  'terrain3d.scene.grassland': '松潘草地',
+  'terrain3d.caption.jiajin': '翻越夹金山：在立体地形中观察川西山地起伏。',
+  'terrain3d.caption.grassland': '穿越松潘草地：观察高原与河谷交错的地貌。',
+  'terrain3d.source': '底图 © OpenStreetMap · 高程数据 © AWS Open Data / Tilezen',
 }

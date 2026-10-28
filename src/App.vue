@@ -9,7 +9,7 @@
  * 防闪烁说明：开场页是独立路由页（不初始化地图），配合 index.html 的 #boot 预置屏，
  * 刷新首帧永远与开场页同款，不再短暂露出地图。
  */
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import SandboxMap from './components/SandboxMap.vue'
 import TimelineBar from './components/TimelineBar.vue'
 import EventPanel from './components/EventPanel.vue'
@@ -29,6 +29,8 @@ import { useI18n } from './core/i18n'
 // DAY_MS 单源在 utils：本文件此前自带一份 86400000 字面量副本
 import { DAY_MS } from './utils/geo'
 
+const Terrain3D = defineAsyncComponent(() => import('./components/Terrain3D.vue'))
+
 // 恢复用户偏好（底图/倍速/开关/图层/图例折叠/语言），需在子组件挂载前完成
 initPrefs()
 // 初始化路由（读当前 hash → 首帧即落在正确页面）
@@ -41,6 +43,7 @@ const showFigures = ref(false)
 const showIndex = ref(false)
 const showHelp = ref(false)
 const showFinale = ref(false)
+const showTerrain3D = ref(false)
 
 // 播放自然到达终点（演示讲解或连播）→ 弹出长征精神结语。
 // finished 仅由 tick 置位（seek 不置位），拖动/跳转不会误触。
@@ -66,7 +69,8 @@ function onStart(mode) {
  * @returns {boolean} 是否有关闭对象（无则吞掉按键不做任何事）
  */
 function closeTopOverlay() {
-  if (showHelp.value) showHelp.value = false
+  if (showTerrain3D.value) showTerrain3D.value = false
+  else if (showHelp.value) showHelp.value = false
   else if (showIndex.value) showIndex.value = false
   else if (showFigures.value) showFigures.value = false
   else if (showFinale.value) showFinale.value = false
@@ -93,6 +97,7 @@ function onKey(e) {
     closeTopOverlay()
     return
   }
+  if (showTerrain3D.value) return
   if (route.name === ROUTES.INTRO) {
     if (e.code === 'Enter' || e.code === 'Space') {
       e.preventDefault()
@@ -195,6 +200,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         ★ 长征精神
       </button>
 
+      <button
+        class="pill-toggle"
+        :class="{ on: showTerrain3D }"
+        :title="t('tip.terrain3d')"
+        @click="showTerrain3D = !showTerrain3D"
+      >
+        {{ t('pill.terrain3d') }}
+      </button>
+
       <button class="pill-toggle" :title="t('tip.restart')" @click="restart">{{ t('pill.restart') }}</button>
     </header>
 
@@ -229,6 +243,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           {{ t('help.sec') }}
         </div>
       </div>
+      <Terrain3D v-if="showTerrain3D" @close="showTerrain3D = false" />
     </main>
 
     <footer class="app-footer">

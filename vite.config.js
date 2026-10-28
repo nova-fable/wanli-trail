@@ -16,6 +16,7 @@ export default defineConfig({
         // leaflet 单独分包：数据/样式迭代时不重下发 vendor
         manualChunks: {
           leaflet: ['leaflet'],
+          maplibre: ['maplibre-gl'],
         },
       },
     },

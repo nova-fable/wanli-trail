@@ -13,12 +13,14 @@ export default {
   'pill.index': 'Events',
   'pill.finale': '★ Long March Spirit',
   'pill.restart': '↻ Replay',
+  'pill.terrain3d': '3D Terrain',
   'tip.follow': 'Camera follows the marching troops during playback (map drag turns it off)',
   'tip.autoTour': 'Pause and narrate when playback crosses a key event',
   'tip.figures': 'Key figures of the Long March; click one to jump to their debut event',
   'tip.index': 'Overview of {n} key events; click a row to jump',
   'tip.finale': 'The Long March spirit: five essences · numbers · the poem',
   'tip.restart': 'Back to October 1934 and replay',
+  'tip.terrain3d': 'Open the 3D terrain preview for Jiajin Mountain and the Songpan Grasslands',
   'tip.basemap': 'Switch basemap',
   'tip.compass': 'North is up',
 
@@ -127,4 +129,11 @@ export default {
 
   // ===== Language =====
   'lang.label': 'Language',
+  'terrain3d.title': 'Long March Terrain · 3D Preview',
+  'terrain3d.note': 'Experimental terrain preview · drag to rotate, scroll to zoom',
+  'terrain3d.scene.jiajin': 'Jiajin Mountain',
+  'terrain3d.scene.grassland': 'Songpan Grasslands',
+  'terrain3d.caption.jiajin': 'Crossing Jiajin Mountain: explore the relief of western Sichuan in 3D.',
+  'terrain3d.caption.grassland': 'Crossing the Songpan Grasslands: explore the plateau and river valleys.',
+  'terrain3d.source': 'Basemap © OpenStreetMap · Elevation data © AWS Open Data / Tilezen',
 }

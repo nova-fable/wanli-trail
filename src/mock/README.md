@@ -9,7 +9,8 @@
  * ```text
  * mock/
  *   index.js            历史数据仓库 barrel —— 全应用唯一引用入口
- *   events.js           事件装配层：EVENT_TYPES / 排序 / 派生视图
+ *   events/index.js     事件装配层：EVENT_TYPES / 排序 / 派生视图
+ *   events/catalog.js   可变绑定与 setter（破循环用，零依赖）
  *   events/             57 个事件按部队分四个领域文件（n25 / red-first / red-fourth / red-second）
  *   situation/          战场态势四组实体（zones / blockades / units / japan）
  *   armies.js           四路红军元信息（含 color/provinces 等展示字段）
@@ -24,16 +25,16 @@
  *
  * - 一律 `import { EVENTS } from '../mock'`（barrel），禁止 import 领域文件
  *   （`../mock/events/red-first`）——领域文件是数据分片，不是 API。
- * - **唯一例外**：`situation.js` 路由需要按类索引四组态势实体，
- *   允许 `import { ZONES, KMT_BLOCKADES } from './situation'`（子 barrel）。
+ * - 子 barrel（`events/index.js`、`situation/index.js`）只供本目录内部装配使用，
+ *   外部一律走主 barrel；`situation/index.js` 目前仅由 `index.js` 转出。
  * - 领域文件禁止 import 上层 barrel（会形成循环）；需要跨域引用时改由 barrel 装配，
- *   先例见 `events/index.js` 的 setter 注入与 `events.js` 的装配顺序契约。
+ *   先例见 `events/catalog.js` 的 setter 注入与 `mock/index.js` 的装配顺序契约。
  * - 数据文件不得 import `components/` `map/` `composables/`（依赖方向单向向下）。
  *
  * ## 事件领域文件契约
  *
  * - 新事件只管插入对应部队文件；**插入位置不影响运行时顺序**——排序在
- *   `events.js` 装配时按 `date` 升序统一完成。
+ *   `events/index.js` 装配时按 `date` 升序统一完成。
  * - `id` 命名 `<部队前缀>-<slug>`（`f1-` `f2-` `f4-` `n25-` `grand-`），一经发布不改
  *   （`figures.js#firstEvent` 引用它）。
  * - 每条事件字段：`id/army/type/name/place/date/dateLabel/lat/lng/zoom/[major]/people/desc`。

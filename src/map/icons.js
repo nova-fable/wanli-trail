@@ -2,8 +2,8 @@
  * @file Leaflet 图标工厂（地图内全部点标记的视觉定义）
  *
  * 职责：walkerIcon / eventIcon / enemyIcon / japanIcon / storyIcon 五类 divIcon 的
- * SVG 组装；形状常量 EV_SHAPES 与 WALKER_ICON 已迁 core/constants/icons，本文件只兼容转出
- * （消费方仍可 `import { EV_SHAPES } from '../map/icons'`）。
+ * SVG 组装；形状常量 EV_SHAPES 与 WALKER_ICON 在 core/constants/icons
+ * （几何常量与图标工厂分家：常量属 core，工厂属 map）。
  * 数据来源：EVENT_TYPES（类型徽记 mark/color）、ARMIES（部队配色）。
  * 写路径：纯函数返回 L.divIcon，由 SandboxMap 组装进图层；样式钩子
  * （.walker / .ev-mark / .kmt-flag / .jp-mark / .story-mark）在 styles/map.css。
@@ -11,8 +11,6 @@
 import L from 'leaflet'
 import { EVENT_TYPES } from '../mock'
 import { EV_SHAPES, WALKER_ICON } from '../core/constants/icons'
-
-export { EV_SHAPES } from '../core/constants/icons'
 
 /**
  * 行军小红军图标：SVG 组合人物（帽徽/背包/行军旗/四肢）+ 部队臂章；

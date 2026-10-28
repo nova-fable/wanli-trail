@@ -42,7 +42,10 @@ src/utils/                     无状态纯工具（归类索引见 utils/README
   format.js                    展示格式化（armyColor/armyName，接收数据作首参）
 src/composables/
   usePlayback.js               播放引擎单例（时间域/倍速/事件指针/seek/dt 限幅）
-  useLayers.js                 图层显隐与四军实时状态
+  useLayers.js                 图层显隐开关（armyVisible/situationVisible）
+  useRoutes.js                 行军路线预处理（样条加密 + 里程，地图与开场页共用）
+  useArmyStatus.js             各军行军状态冷热双层（热层 markRaw / 冷层 reactive）
+  useTimeline.js               时间带逻辑层（刻度几何/悬停/拖动 seek 状态机）
   useMapBase.js                底图配置
   usePrefs.js                  用户偏好持久化（localStorage，含语言代管）
 src/mock/                      史实数据集（唯一单源，使用契约见 mock/README.md）
@@ -73,8 +76,9 @@ docs/
 
 - **数据文件是史实唯一单源**，`docs/` 是它的成文档化视图：改数据必须同步补 docs，反之亦然。
   目录归类与引用规则见 `src/mock/README.md`（**改数据前必读**）。
-- 组件取数据只走 barrel：`import { EVENTS } from '../mock'`；禁止 import 领域文件
-  （`../mock/events/red-first`）。唯一例外是 `map/situation.js`（走子 barrel `../mock/situation`）。
+- 组件取数据只走主 barrel：`import { EVENTS } from '../mock'`（`src/mock/index.js`）。
+  **无例外**：领域文件（`../mock/events/red-first`）与子 barrel（`../mock/situation`）
+  是数据分片与内部装配层，不是 API；`map/situation.js` 也从主 barrel 取数。
 - 时间窗语义统一走 `utils/date.js` 的 `inWindow`（底层 `endOfDay` 把 to 补到当日最后一毫秒）；
   **禁止在组件里自建 endOfDay 副本或手写区间比较**。
 - 事件按部队分四个领域文件，导出时由装配层按日期排序——**新增事件只管插入对应部队文件**，
@@ -93,6 +97,8 @@ docs/
   面板圆角/阴影），新样式先找 token，找不到先补 token 再用；分片归属见 `docs/dev/design.md`。
 - 常量按域分片放 `core/constants/`，枚举单源在 `core/enums/` 与 `mock`（史实域枚举）；
   同一数值禁止在多处字面量重复（JS 侧配色走 `core/constants/colors.js`）。
+- **状态分层**：进入 `render()` 每帧写入范围的响应式状态必须走 `useArmyStatus` 的冷热双层
+  （热层 `markRaw` + 冷层变更检测推送）；禁止把逐帧变化的状态直接做成 reactive 供 UI 订阅。
 - 播放热路径（`render()` 每 50ms 一次）禁止每帧重建大数组/新建对象；已走折线由
   `createTravelTracker` 增量维护，`positionAt` 传 `{ noTravel: true }`。
 - 镜头是状态机（`camera.js` 的 `busy` 飞行互斥 + EMA 跟拍）：改镜头逻辑前先读 `map/camera.js` 与

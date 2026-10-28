@@ -41,7 +41,7 @@ components ─▶ composables ─▶ mock（数据）─┐
 | `src/core/i18n/` | 列式词典引擎（zhCN 基础键源 + en Partial + `t()`） | 不键化史实内容 |
 | `src/utils/` | 无状态纯工具（geo/date/format） | 不持有状态、不读数据仓库、不碰 DOM |
 | `src/map/` | Leaflet 域模块（icons/camera/traveled/arrows/situation） | 不含 Vue 响应式状态 |
-| `src/composables/` | 响应式单例与复用逻辑 | 不直接操作 Leaflet 图层 |
+| `src/composables/` | 响应式单例与复用逻辑（`useLayers` 开关 / `useRoutes` 路线几何 / `useArmyStatus` 行军状态 / `usePlayback` 播放引擎 / `usePrefs` 持久化 / `useTimeline` 时间带 / `useMapBase` 底图） | 不直接操作 Leaflet 图层 |
 | `src/components/` | 视图组件；`SandboxMap.vue` 只编排地图 | 组件内禁止 `<style>` 块 |
 | `src/styles/` | 样式单源：`global.css` 为 `@import` 清单，按语义分片 | 分片顺序即层叠顺序，不得随意调整 |
 
@@ -104,6 +104,27 @@ components ─▶ composables ─▶ mock（数据）─┐
 - 用户拖动即夺取镜头（dragstart → `abort()` 关跟随、中止飞行）；
   `isBusy()` 期间的 zoomstart 是镜头自身缩放，不误清锚点（走 `dropAnchor()`）。
 
+## 状态分层：热状态与冷状态
+
+`SandboxMap.render()` 每 50ms 跑一次，是全局唯一的热路径。**任何进入它写入范围的响应式
+状态都会把读者拖进逐帧依赖链**，故按变更频率分层（参见 `useArmyStatus.js`）：
+
+| 层 | 载体 | 变更频率 | 消费者 |
+|---|---|---|---|
+| 热 | `armyStatus`（`markRaw`） | 每帧写 | 地图内部（camera 跟随目标筛选） |
+| 冷 | `armyDisplay`（`reactive`） | 仅在可见变化时推送 | `ArmyLegend` 等 UI |
+
+依据（实测）：
+- Vue 的 reactive setter 对**同值赋值短路**（写 1000 次相同值触发 0 次 effect），
+  故 UI 重渲染频率由「值的真实变化率」决定 —— `pct` 是整数百分比，按真实路线数据
+  1× 速率下约 **2 次/秒**，不是 20 次/秒。
+- 但 reactive 代理的**写入开销**按帧累积：20 万帧 × 4 军 × 3 字段实测
+  reactive 739.9ms vs `markRaw` 2.0ms（约 370×），这是分层的直接收益。
+- 分层的第二收益是解耦：图例不再订阅"50ms 仿真"，将来给热层加字段不会无声拖垮 UI。
+
+同理，时间带的 `past` 标记不在每帧重建 57 个刻度对象，而是布局骨架模块求值期算一次、
+`past` 由 `watchEffect` 就地更新（只在已发生条数变化时写，O(log n) 二分）。
+
 ## 性能设计要点
 
 | 问题 | 对策 |
@@ -112,6 +133,8 @@ components ─▶ composables ─▶ mock（数据）─┐
 | 每帧重建 traveled 数组（~10 万对象/秒 GC） | `positionAt` 的 `noTravel` 模式 |
 | `parseDate` 高频 Date 解析 | `utils/geo.js` 内 Map 记忆化（日期串有限集合）**不可删** |
 | `countPassed` 每帧 O(n) | `EVENT_TS` 预解析 + 二分 |
+| UI 订阅逐帧写入的状态 | 冷热分层（`useArmyStatus`）：热层 `markRaw`，冷层仅变更时推送 |
+| 时间带刻度每帧重建 57 对象 | 布局骨架模块求值期定型，`past` 就地更新 |
 | 流动虚线恒定重栅格化 | `.running` 类仅行进播放时挂载 |
 | 单 chunk 迭代缓存差 | `manualChunks` 分离 leaflet |
 

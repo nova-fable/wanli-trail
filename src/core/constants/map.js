@@ -18,7 +18,12 @@ export const MAP_VIEW = {
   ],
   /**
    * 地图初始/整体视野的底部预留（px）：为全宽时间带 + 字幕（含诗词双行）让位，
-   * 窄屏时间带更矮，取值与 styles/timeline.css 的 .timeline-dock 高度约定一致
+   * 窄屏时间带更矮。CSS 侧同值锚点（改动需同步）：
+   * - `narrow: 150` ↔ `styles/responsive.css` 的 `.leaflet-bottom.leaflet-right { bottom: 150px }`
+   *   （Leaflet 比例尺抬离时间带）与 `styles/timeline.css` 的 `.timeline-dock` 高度
+   * - `wide: 210` 是 JS 侧视野预留，CSS 无对等声明：宽屏下比例尺位置由
+   *   `styles/map.css` 的 `.leaflet-bottom.leaflet-right { bottom: 200px }` 单独约定，
+   *   两者不要求相等（视野预留算的是地图可视区，控件位置算的是控件自身避让）
    */
   RESERVE: { wide: 210, narrow: 150 },
   /** 窄屏断点（与 styles/responsive.css @media 断点同值）；仅作视口预留档位判据，见 ui.js 文件头 */

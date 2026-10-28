@@ -197,11 +197,6 @@ export function restart() {
   startTour()
 }
 
-export function eventOrder(ev) {
-  const i = sortedEvents.indexOf(ev)
-  return i < 0 ? null : i + 1
-}
-
 let toastTimer = null
 export function flashToast(text) {
   playback.toast = text

@@ -67,4 +67,6 @@
 
 ## 显隐机制
 
-`SandboxMap.updateSituation(t)` 每帧比对当前时间与各实体时间窗，仅在状态翻转时增删图层（DOM 零抖动）；左上图例的"战场态势"分区实时统计各类活跃实体数（与地图显隐同一 endOfDay 语义）。
+`buildSituationLayers(map).update(t, fx)`（`src/map/situation.js`）每帧比对当前时间与各实体时间窗，
+仅在状态翻转时增删图层（DOM 零抖动）；左上图例的"战场态势"分区经 `inWindow` 实时统计各类活跃实体数
+（与地图显隐同一时间窗语义，`to` 含当日）。

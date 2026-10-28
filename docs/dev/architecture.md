@@ -141,3 +141,22 @@ tokens → base → map → panel-legend → panel-event → timeline → panel-
 armyVisible、situationVisible、lang（语言由 usePrefs 代管写盘）。
 `initPrefs()` 必须在子组件挂载前调用（App setup 期）；watch 汇聚全部偏好变化统一落盘，
 try/catch 兼容隐私模式。
+
+## 改动本仓库时的已知陷阱
+
+这些坑都在重构中实际踩过，代价是返工；此处成文以免重复。
+
+- **同名文件遮蔽目录**：`src/mock/events.js` 与 `src/mock/events/` 同时存在时，
+  Vite/Rollup 把 `./events` 解析到**文件**而非目录索引，导致 barrel 自引用。
+  故事件装配层是 `mock/events/index.js`（不是 `events.js`），目录契约清单为 `mock/events/catalog.js`。
+- **live binding 不要本地缓存**：barrel 里 `export let` 的可变导出（如 `EVENT_TYPES`/`EVENTS`）
+  会经 setter 注入后更新，调用方一律现取，不要解构到模块级常量里缓存。
+- **CSS 死代码判定必须用词边界**：`grep '\.tl-ev\b'` 会把 `.tl-ev-card` 误判为命中；
+  正确写法是 `grep -E '\.tl-ev([^a-z0-9-]|$)'`。另有**动态拼接类名**（如 `bm-${cfg.key}` 生成的
+  `.bm-amap/.bm-esri/.bm-osm`）朴素 grep 必为 0 命中，但它们是 LIVE 的，不能删。
+- **搬移后要 grep 注释里的旧路径**：`src/data` 这类旧指向在注释里同样要改，
+  否则违反「注释里引用的路径必须存在」。
+- **隔离实验必须固定 commit**：`git archive HEAD` 只导出**已提交**状态，与工作区磁盘内容不是一回事；
+  并发批次有未提交改动时用它会把结果归因错。要用 `git archive <sha>` 显式固定版本。
+- **CSS 等价性不能用「逐字相同」判定**：语义段物理交错时不存在能复现原字节序的分片排列；
+  应改为规则双向差集 + 选择器计数 + **重名选择器声明体逐字一致**（后者才证明重排是顺序置换而非内容改动）。

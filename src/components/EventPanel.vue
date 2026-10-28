@@ -6,7 +6,7 @@
 <script setup>
 import { computed } from 'vue'
 import { playback, closePanel, play, openEvent, seek } from '../composables/usePlayback'
-import { EVENTS, EVENT_TYPES, DEPARTURE_DATE, ARMIES } from '../mock'
+import { EVENTS, EVENT_TYPES, DEPARTURE_DATE, ARMIES, eventMeta, eventIndexOf } from '../mock'
 import { parseDate } from '../utils/geo'
 import { dayOfMarch } from '../utils/date'
 import { armyColor, armyName } from '../utils/format'
@@ -18,8 +18,10 @@ const { t } = useI18n()
 const ALL_ARMIES_COLOR = '#d4a94e'
 
 const ev = computed(() => playback.panelEvent)
-const typeMeta = computed(() => (ev.value ? EVENT_TYPES[ev.value.type] : null))
-const idx = computed(() => (ev.value ? EVENTS.findIndex((e) => e.id === ev.value.id) : -1))
+// 类型徽记：eventMeta 收敛了“类型元数据 + 缺失类型兜底 battle”的口径
+const typeMeta = computed(() => (ev.value ? eventMeta(ev.value).typeMeta : null))
+// 序号用 eventIndexOf（1 基，非成员返回 null）：与时间轴/索引面板同源
+const order = computed(() => (ev.value ? eventIndexOf(ev.value) : null))
 
 const dayText = computed(() => {
   if (!ev.value) return ''
@@ -29,7 +31,7 @@ const dayText = computed(() => {
 
 const armyChip = computed(() => {
   if (!ev.value) return null
-  if (ev.value.army === 'all') return { name: '多路红军主力', color: ALL_ARMIES_COLOR }
+  if (ev.value.army === 'all') return { name: t('ep.allArmies'), color: ALL_ARMIES_COLOR }
   const color = armyColor(ARMIES, ev.value.army)
   return color ? { name: armyName(ARMIES, ev.value.army), color } : null
 })
@@ -39,7 +41,7 @@ const showContinue = computed(() => !!playback.currentEvent)
 const showPlayFromHere = computed(() => !playback.currentEvent && !playback.playing)
 
 function go(delta) {
-  const i = idx.value + delta
+  const i = (order.value ?? 0) - 1 + delta
   if (i >= 0 && i < EVENTS.length) openEvent(EVENTS[i])
 }
 
@@ -86,9 +88,9 @@ function continueFromEvent() {
     </div>
 
     <div class="ep-nav">
-      <button :disabled="idx <= 0" @click="go(-1)">◂ 上一事件</button>
-      <span class="pos">{{ idx + 1 }} / {{ EVENTS.length }}</span>
-      <button :disabled="idx >= EVENTS.length - 1" @click="go(1)">{{ t('ep.next') }}</button>
+      <button :disabled="order <= 1" @click="go(-1)">{{ t('ep.prev') }}</button>
+      <span class="pos">{{ order }} / {{ EVENTS.length }}</span>
+      <button :disabled="order >= EVENTS.length" @click="go(1)">{{ t('ep.next') }}</button>
     </div>
   </div>
 </template>

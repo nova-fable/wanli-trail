@@ -83,7 +83,7 @@ const strengths = computed(() => {
 <template>
   <div class="army-legend">
     <h4 class="lg-head" :title="t('legend.fold')" @click="collapsed = !collapsed">
-      红军部队
+      {{ t('legend.armies') }}
       <span class="lg-fold">{{ collapsed ? '▸' : '▾' }}</span>
     </h4>
     <div v-show="!collapsed">

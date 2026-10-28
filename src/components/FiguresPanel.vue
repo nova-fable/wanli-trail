@@ -5,7 +5,7 @@
 -->
 <script setup>
 import { FIGURES, figureColor, EVENTS } from '../mock'
-import { playback, openEvent } from '../composables/usePlayback'
+import { playback, openEvent, halt } from '../composables/usePlayback'
 import { useI18n } from '../core/i18n'
 import OverlayShell from './OverlayShell.vue'
 
@@ -17,7 +17,7 @@ const emit = defineEmits(['close'])
 function jump(f) {
   const ev = EVENTS.find((e) => e.id === f.firstEvent)
   if (ev) {
-    playback.playing = false
+    halt()
     playback.follow = false
     openEvent(ev)
   }

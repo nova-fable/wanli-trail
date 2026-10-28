@@ -8,7 +8,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { EVENTS, EVENT_TYPES, ARMIES, eventMeta, eventIndexOf } from '../mock'
-import { playback, openEvent, seek } from '../composables/usePlayback'
+import { playback, openEvent, seek, halt } from '../composables/usePlayback'
 import { parseDate } from '../utils/geo'
 import { useI18n } from '../core/i18n'
 import OverlayShell from './OverlayShell.vue'
@@ -43,7 +43,7 @@ const rows = computed(() => {
 
 // 点击条目 → 跳到该事件日期并弹出讲解（暂停播放、镜头飞行）
 function jump(ev) {
-  playback.playing = false
+  halt()
   playback.follow = false
   seek(parseDate(ev.date))
   openEvent(ev)

@@ -58,6 +58,12 @@ components ─▶ composables ─▶ mock（数据）─┐
   关闭时仅更新 `lastEventArmy` 供镜头跟随。
 - **seek 语义**：拖动/跳转**不置 `finished`**（结语只在 tick 自然到达终点时触发，
   防止拖到末端误弹结语或"回卷重播"）。
+- **播放态不变量（改播放行为前必读）**：`playback.playing` 与 `setInterval` 句柄必须**同源变更**。
+  `play()` 幂等起表（先 `stopTimer()` 再 `setInterval`），`pause()` 是唯一停表入口；
+  组件需要"暂停后跳转"必须调 `halt()`，**禁止裸写 `playback.playing = false`**——
+  裸写不会清表，`tick` 会以 50ms 空转（`tick` 的 `!playing` 分支只 return 不清表）；
+  反之裸把标志置 true 也不会重建定时器，界面显示播放中而时间永久停滞。
+  历史上事件总览/人物志/时间带的跳转与拖动都踩过这两种写法，已统一收口。
 
 ## 地图渲染（components/SandboxMap.vue + src/map/ 模块）
 

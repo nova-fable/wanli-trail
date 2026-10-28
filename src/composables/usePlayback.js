@@ -108,20 +108,41 @@ export function play() {
   // 跳过刚好停在当前时间点的事件（已讲解过），从下一个事件继续检测
   syncEventPointer()
   playback.playing = true
-  if (intervalId == null) {
-    lastTs = null
-    intervalId = setInterval(tick, PLAYBACK.TICK_MS)
-  }
+  // 幂等起表：先停旧表再起新表，使"标志位"与"定时器"永远同源变更。
+  // 不能写成 `if (intervalId == null)`——组件若绕过 pause() 裸写 playing=false
+  // （历史上 EventIndex/FiguresPanel/TimelineBar 都这么干过），定时器仍在跑，
+  // 此时标志已置 true 但本函数不会再起表，播放将永久停滞；反之裸停标志则泄漏定时器。
+  stopTimer()
+  lastTs = null
+  intervalId = setInterval(tick, PLAYBACK.TICK_MS)
 }
 
-export function pause() {
-  playback.playing = false
-  // 暂停即停表：避免 interval 常驻空转（play() 会按需重建）
+/**
+ * 停止时间推进（内部）：清表并复位计时基准。
+ * 只改标志不调用本函数 = 标志与定时器脱钩，是播放永久停滞/空转的根因。
+ */
+function stopTimer() {
   if (intervalId != null) {
     clearInterval(intervalId)
     intervalId = null
   }
   lastTs = null
+}
+
+export function pause() {
+  playback.playing = false
+  stopTimer()
+}
+
+/**
+ * 停止推进并清空讲解态（跳转类操作前的统一暂停入口）。
+ * 组件需"暂停后跳转"时必须调本函数，**禁止裸写 `playback.playing = false`**：
+ * 裸写不会 clearInterval，tick 会以 50ms 空转直到下次 play()/pause()。
+ */
+export function halt() {
+  pause()
+  playback.currentEvent = null
+  playback.panelEvent = null
 }
 
 export function toggle() {
@@ -167,7 +188,7 @@ export function startExplore() {
   playback.started = true
   playback.autoTour = false
   playback.follow = false
-  playback.playing = false
+  pause()
   seek(T_END)
 }
 

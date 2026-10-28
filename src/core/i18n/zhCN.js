@@ -3,7 +3,7 @@
  *
  * 约定（同 ai-tracker-hud 列式词典架构）：
  * - 所有 UI 文案键在此定义；新增键必须先加 zhCN，en 为 Partial 可滞后（缺键回退中文）
- * - 数据内容（事件/人物/故事/诗词/阶段等史实文案）不键化，留在 src/data/，见 docs/dev/i18n
+ * - 数据内容（事件/人物/故事/诗词/阶段等史实文案）不键化，留在 src/mock/，见 docs/dev/i18n
  * - 占位符语法：`{name}`，由 t(key, params) 替换
  */
 export default {
@@ -24,7 +24,11 @@ export default {
   'tip.basemap': '切换底图',
   'tip.compass': '上北下南',
 
+  // ===== 通用 =====
+  'close': '关闭',
+
   // ===== 开场页 =====
+  'intro.title': '红军长征',
   'intro.sub': '伟大的战略转移 · 1934.10 — 1936.10',
   'intro.btn.tour': '▶ 开始演示',
   'intro.btn.explore': '自由探索',
@@ -81,7 +85,7 @@ export default {
   'tip.play': '播放',
   'tip.pause': '暂停',
   'tip.replayFinished': '重新播放',
-  'tl.evCardTip': '点击跳转：{name}',
+  'tl.trackAria': '播放进度（左右方向键前后七天）',
 
   // ===== 事件讲解卡 =====
   'ep.k.date': '时',
@@ -110,9 +114,6 @@ export default {
   'finale.sub': '伟大长征精神，是中国共产党人红色基因和精神族谱的重要组成部分',
   'finale.poemTitle': '《七律 · 长征》',
   'finale.poemAuthor': '毛泽东 · 一九三五年十月',
-  'finale.quote':
-    '"长征是宣言书，长征是宣传队，长征是播种机。……长征是以我们的胜利、敌人失败的结果而告结束。"',
-  'finale.quoteFrom': '—— 毛泽东《论反对日本帝国主义的策略》',
   'finale.again': '↻ 再走一遍长征路',
   'finale.explore': '自由探索',
   'finale.back': '返回沙盘',

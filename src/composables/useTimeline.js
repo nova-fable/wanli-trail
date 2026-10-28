@@ -1,31 +1,29 @@
 /**
- * @file 时间带派生逻辑与拖动 seek 状态机（TimelineBar 的逻辑层）
+ * @file 时间带（TimelineBar）的逻辑层：刻度几何 / 悬停预览 / 拖动 seek 状态机
  *
- * 职责：刻度几何（事件点 / 月份-年份刻度）、悬停预览、拖动 seek 状态机。
- * 数据来源：playback（时间）、EVENTS（事件刻度）、T_START/T_END（时间域）。
- * 写路径：seekRatio（拖动）/ openEvent（点击刻度）。
+ * 职责：把 TimelineBar 里与视图无关的部分收拢到一处——事件点与月份刻度的几何、
+ * 悬停预览状态、pointer 拖动状态机（含 pointercancel 兜底与卸载解绑）。
+ * 数据来源：playback（时间/播放态）、EVENTS（事件刻度）、T_START/T_END（时间域）。
+ * 写路径：seekRatio（拖动/点击）/ openEvent（点击事件刻度）。
  *
- * 热路径约束（AGENTS.md）：播放时 render 每 50ms 一次，本文件**不在 render 路径上分配**——
- * - `eventDots` 是 computed：只依赖 EVENTS（常量）与 playback.time，播放中每 50ms 重算一次是
- *   本来就必须的（past 着色随时间变），但重算只新建长度 = EVENTS.length 的小对象数组，
- *   与拆分前逐字相同；不新增任何每帧分配。
- * - `monthTicks` 是模块级常量：与 playback.time 无关，原实现是组件内的 IIFE 常量，
- *   抽到 composable 后**仍然只在模块求值时算一次**（若写成 computed，虽然也只算一次，
- *   但会引入无谓的依赖追踪开销；写成函数让调用方每次调则退化为每帧重算，均不可取）。
- * - 时间戳一律经 `parseDate`（utils/geo.js 记忆化）取，禁止 `new Date(...)`。
- *
- * `pctOf` 依赖 T_START/SPAN：三者都是模块常量，刻度几何在模块作用域算一次即可，
- * 不放进任何每次 render 都执行的位置。
+ * 热路径约束（AGENTS.md「播放热路径禁止每帧重建大数组/新建对象」）：
+ * - `eventDots` 保持 computed：本就必须随 playback.time 重算 past 着色，重算只分配
+ *   长度 = EVENTS.length（57）的小对象数组，与拆分前逐字相同，未新增每帧分配。
+ * - `monthTicks` 保持**模块级常量**（IIFE，与原组件内写法同构）：与时间无关，
+ *   全进程只算一次。刻意不写成函数（调用方每次调 = 每帧重算）也不写成 computed
+ *   （多一层依赖追踪却永远不变）。年份区间由 T_START/T_END 折算，不硬编码 1934/1936。
+ * - 所有时间戳经 `parseDate`（utils/geo.js 记忆化）取得，不新建 `new Date(...)`；
+ *   仅 monthTicks 的年份边界用 `new Date(时间戳)` 取年号，属模块求值期的两次调用。
  */
 import { computed, ref } from 'vue'
-import { playback, seekRatio, openEvent, T_START, T_END } from './usePlayback'
+import { playback, play, pause, seekRatio, openEvent, T_START, T_END } from './usePlayback'
 import { EVENTS } from '../mock'
 import { parseDate, formatCnDate } from '../utils/geo'
 
-/** 时间域跨度（毫秒），与 usePlayback 的时间域单源 */
+/** 时间域跨度（毫秒）：与 usePlayback 的 T_START/T_END 单源，模块内只算一次 */
 const SPAN = T_END - T_START
 
-/** 时间戳 → 轨道百分比（模块内几何单源，事件点与月份刻度共用） */
+/** 时间戳 → 轨道百分比（事件点与月份刻度共用的几何，模块求值期定型） */
 const pctOf = (ms) => ((ms - T_START) / SPAN) * 100
 
 /** 事件刻度：相邻过近时上下交错两排，避免粘连 */
@@ -45,10 +43,7 @@ const eventDots = computed(() => {
   return dots
 })
 
-/**
- * 月份刻度尺：每月小刻度、一月（年份）大刻度。
- * 模块级常量：年份区间与时间域同源（T_START 所在年到 T_END 所在年），只算一次。
- */
+/** 月份刻度尺：每月小刻度，一月（年份）大刻度；年份范围由时间域折算 */
 const monthTicks = (() => {
   const ticks = []
   const y0 = new Date(T_START).getFullYear()
@@ -63,12 +58,12 @@ const monthTicks = (() => {
   return ticks
 })()
 
-/** 年份标签刻度（模板里 monthTicks.filter(...) 的等价派生，避免每次 render 过滤） */
-const yearTicks = monthTicks.filter((t) => t.label)
+/** 年份标签刻度：模块常量（模板不再每次 render 跑 `monthTicks.filter(...)`） */
+const yearTicks = monthTicks.filter((tk) => tk.label)
 
 /**
- * 时间带逻辑：返回模板所需的响应式量与事件处理器
- * @returns {object} 刻度/悬停/拖动相关的 ref、computed 与 handler
+ * 时间带逻辑与事件处理器
+ * @returns {object} 供 TimelineBar 模板使用的响应式量、常量与 handler
  */
 export function useTimeline() {
   const fillPct = computed(() => pctOf(playback.time))
@@ -94,12 +89,6 @@ export function useTimeline() {
   function onDotLeave() {
     hoverDot.value = null
   }
-
-  function ratioOf(e) {
-    const r = trackEl.value.getBoundingClientRect()
-    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
-  }
-
   function onTrackMove(e) {
     if (dragging) return
     const r = trackEl.value.getBoundingClientRect()
@@ -109,38 +98,33 @@ export function useTimeline() {
     hoverRatio.value = -1
   }
 
+  function ratioOf(e) {
+    const r = trackEl.value.getBoundingClientRect()
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+  }
+  function onDown(e) {
+    dragging = true
+    wasPlaying = playback.playing
+    pause()
+    seekRatio(ratioOf(e), { keepPanel: true })
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+  }
+  function onMove(e) {
+    if (dragging) seekRatio(ratioOf(e), { keepPanel: true })
+  }
   function onUp() {
     dragging = false
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
     window.removeEventListener('pointercancel', onUp)
     // 拖到终点不自动恢复播放：交由用户显式播放/重新演示
-    if (wasPlaying && playback.time < T_END) playback.playing = true
-    else if (wasPlaying) playback.playing = false
-  }
-  function onMove(e) {
-    if (dragging) seekRatio(ratioOf(e), { keepPanel: true })
-  }
-  function onDown(e) {
-    dragging = true
-    wasPlaying = playback.playing
-    playback.playing = false
-    seekRatio(ratioOf(e), { keepPanel: true })
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
+    if (wasPlaying && playback.time < T_END) play()
   }
 
-  /** 连播：回到 1934-10 从头自动播放到大会师（关闭逐事件暂停讲解） */
-  function playThrough() {
-    playback.autoTour = false
-    playback.playing = false
-    playback.time = T_START
-    playback.playing = true
-  }
-
-  /** 组件卸载时解绑（拖动中途切路由不会泄漏监听） */
-  function cleanup() {
+  /** 卸载解绑：拖动中途切路由不留悬浮监听（onUp 在拖动结束后已自行解绑） */
+  function teardownDrag() {
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
     window.removeEventListener('pointercancel', onUp)
@@ -155,5 +139,14 @@ export function useTimeline() {
     hoverDot,
     hoverRatio,
     hoverDate,
+    eventDots,
+    monthTicks,
+    yearTicks,
+    onDotEnter,
+    onDotLeave,
+    onTrackMove,
+    onTrackLeave,
+    onDown,
+    teardownDrag,
   }
 }

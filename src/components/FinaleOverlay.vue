@@ -81,7 +81,7 @@ function explore() {
 
       <div class="finale-actions">
         <button class="btn-tour" @click="again">{{ t('finale.again') }}</button>
-        <button class="btn-explore" @click="explore">自由探索</button>
+        <button class="btn-explore" @click="explore">{{ t('finale.explore') }}</button>
         <button class="btn-explore" @click="emit('close')">{{ t('finale.back') }}</button>
       </div>
     </div>

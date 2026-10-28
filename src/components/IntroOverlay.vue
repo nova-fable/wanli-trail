@@ -16,6 +16,8 @@
 import { computed } from 'vue'
 import { ARMIES, EVENTS } from '../mock'
 import { preparedRoutes } from '../composables/useLayers'
+import { T_START, T_END } from '../composables/usePlayback'
+import { DAY_MS } from '../utils/geo'
 import { EVENT_INDEX } from '../core/constants/history'
 import { useI18n } from '../core/i18n'
 
@@ -58,6 +60,26 @@ const starMarks = computed(() =>
 
 /** 竖排诗词（史实内容，保持中文；EN 下作为书法装饰保留） */
 const POEM_LINES = ['红军不怕远征难', '万水千山只等闲']
+
+// ===== 统计条数值：全部由数据推导，禁止硬编码 =====
+/** 路数 = */
+const armyCount = ARMIES.length
+
+/**
+ * 省数 = 四路 `provinces` 的去重并集。
+ * 口径：按**省名**去重（不是按行政实体）——各路数据里的 '西康' 是同一历史省份，
+ * 合并计一次；参谋部数据以省名书写，不做规范化映射。
+ */
+const provinceCount = new Set(ARMIES.flatMap((a) => a.provinces)).size
+
+/**
+ * 昼夜数 = 时间域折算，口径与统计条原值 761 一致。
+ * `T_START`/`T_END` 是东八区零点，两者**差值**已含首日与末日之间的全部天数：
+ * 1934-10-01 → 1936-10-31 恰好 (761 天) —— 即 1934-10-01 计第 1 天、
+ * 1936-10-31 计第 761 天（含首尾、按整天，闰年 1936-02-29 自然计入）。
+ * 故直接取整，**不再 +1**（+1 会得到 762，与原值不符）。
+ */
+const marchDays = Math.round((T_END - T_START) / DAY_MS)
 </script>
 
 <template>
@@ -128,7 +150,7 @@ const POEM_LINES = ['红军不怕远征难', '万水千山只等闲']
     <!-- 主体 -->
     <div class="intro-core">
       <div class="intro-star">★</div>
-      <h1 class="intro-title">红军长征</h1>
+      <h1 class="intro-title">{{ t('intro.title') }}</h1>
       <div class="intro-sub">{{ t('intro.sub') }}</div>
 
       <div class="intro-armies">
@@ -148,10 +170,10 @@ const POEM_LINES = ['红军不怕远征难', '万水千山只等闲']
 
       <!-- 统计条：数字金色宋体 + 上缘细线 -->
       <div class="intro-stats">
-        <span><b>4</b>{{ t('intro.stat.armies') }}</span>
+        <span><b>{{ armyCount }}</b>{{ t('intro.stat.armies') }}</span>
         <span><b>{{ EVENTS.length }}</b>{{ t('intro.stat.events') }}</span>
-        <span><b>14</b>{{ t('intro.stat.provinces') }}</span>
-        <span><b>761</b>{{ t('intro.stat.days') }}</span>
+        <span><b>{{ provinceCount }}</b>{{ t('intro.stat.provinces') }}</span>
+        <span><b>{{ marchDays }}</b>{{ t('intro.stat.days') }}</span>
       </div>
     </div>
   </div>

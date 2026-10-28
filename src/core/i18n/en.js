@@ -22,7 +22,11 @@ export default {
   'tip.basemap': 'Switch basemap',
   'tip.compass': 'North is up',
 
+  // ===== Common =====
+  'close': 'Close',
+
   // ===== Intro =====
+  'intro.title': 'The Long March',
   'intro.sub': 'The Great Strategic Transfer · Oct 1934 — Oct 1936',
   'intro.btn.tour': '▶ Start Tour',
   'intro.btn.explore': 'Free Explore',
@@ -79,7 +83,7 @@ export default {
   'tip.play': 'Play',
   'tip.pause': 'Pause',
   'tip.replayFinished': 'Replay',
-  'tl.evCardTip': 'Click to jump: {name}',
+  'tl.trackAria': 'Playback progress (left/right arrow keys jump seven days)',
 
   // ===== Event panel =====
   'ep.k.date': 'Date',
@@ -108,9 +112,6 @@ export default {
   'finale.sub': 'A vital part of the red gene and spiritual lineage of the Chinese Communists',
   'finale.poemTitle': 'The Long March (seven-character poem)',
   'finale.poemAuthor': 'Mao Zedong · October 1935',
-  'finale.quote':
-    '"The Long March is a manifesto, a propaganda team, a seeding machine. ... It ended with our victory and the enemy\'s defeat."',
-  'finale.quoteFrom': '—— Mao Zedong, On the Tactics of Fighting Japanese Imperialism',
   'finale.again': '↻ March again',
   'finale.explore': 'Free explore',
   'finale.back': 'Back to the sandbox',

@@ -35,6 +35,7 @@ import { buildSituationLayers } from '../map/situation'
 
 /** 地图容器 DOM（Leaflet 挂载点） */
 const mapEl = ref(null)
+const props = defineProps({ active: { type: Boolean, default: true } })
 
 /** 地图实例 / 当前瓦片层（module-scope，刻意脱离 Vue 响应式，见文件头） */
 let map = null
@@ -121,6 +122,7 @@ function setBasemap(key) {
  * → 行军状态冷热推送（仅可见变化才写响应式，避免 UI 被拖进逐帧重渲染）
  */
 function render() {
+  if (!props.active) return
   const t = playback.time
   situation.update(t, {
     playing: playback.playing,
@@ -317,6 +319,24 @@ onBeforeUnmount(() => {
   map = null
 })
 
+watch(
+  () => props.active,
+  (active) => {
+    if (!active) {
+      camera.abort()
+      mapEl.value?.classList.remove('smooth-follow')
+      return
+    }
+    setTimeout(() => {
+      if (!props.active || !map) return
+      map.invalidateSize({ animate: false })
+      render()
+      if (playback.panelEvent) flyToEvent(playback.panelEvent)
+      if (playback.follow) camera.resume()
+    }, 0)
+  },
+)
+
 // 每帧播放推进
 watch(
   () => playback.time,
@@ -328,7 +348,7 @@ watch(
   () => playback.playing,
   (v) => {
     render()
-    if (v) camera.resume()
+    if (v && props.active) camera.resume()
   },
 )
 
@@ -340,7 +360,7 @@ watch(
 
 // 镜头飞往事件特写（含遮挡环境兜底，统一走 camera.begin）
 function flyToEvent(ev) {
-  if (!map || !ev) return
+  if (!props.active || !map || !ev) return
   camera.begin([ev.lat, ev.lng], ev.zoom || 8, 1.3)
 }
 
@@ -348,6 +368,7 @@ function flyToEvent(ev) {
 watch(
   () => playback.panelEvent,
   (ev) => {
+    if (!props.active) return
     eventMarkers.forEach((m, i) => {
       const el = m.getElement()?.querySelector('.ev-mark')
       if (el) el.classList.toggle('ev-active', !!ev && EVENTS[i].id === ev?.id)
@@ -362,7 +383,7 @@ watch(
 watch(
   () => playback.follow,
   (v) => {
-    if (v) camera.resume()
+    if (v && props.active) camera.resume()
     else camera.abort()
   },
 )
@@ -371,7 +392,7 @@ watch(
 watch(
   () => playback.speed,
   () => {
-    if (playback.follow && playback.playing && !camera.isBusy()) camera.resume()
+    if (props.active && playback.follow && playback.playing && !camera.isBusy()) camera.resume()
   },
 )
 

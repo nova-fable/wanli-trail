@@ -69,7 +69,8 @@ function onStart(mode) {
  * @returns {boolean} 是否有关闭对象（无则吞掉按键不做任何事）
  */
 function closeTopOverlay() {
-  if (showTerrain3D.value) showTerrain3D.value = false
+  if (showTerrain3D.value && playback.panelEvent) closePanel()
+  else if (showTerrain3D.value) showTerrain3D.value = false
   else if (showHelp.value) showHelp.value = false
   else if (showIndex.value) showIndex.value = false
   else if (showFigures.value) showFigures.value = false
@@ -97,7 +98,7 @@ function onKey(e) {
     closeTopOverlay()
     return
   }
-  if (showTerrain3D.value) return
+  if (t instanceof HTMLElement && t.closest('.terrain3d-map') && e.code.startsWith('Arrow')) return
   if (route.name === ROUTES.INTRO) {
     if (e.code === 'Enter' || e.code === 'Space') {
       e.preventDefault()
@@ -213,8 +214,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </header>
 
     <main class="app-main">
-      <div class="map-wrap">
-        <SandboxMap />
+      <div v-show="!showTerrain3D" class="map-wrap">
+        <SandboxMap :active="!showTerrain3D" />
         <div class="parchment-fx"></div>
         <div class="map-compass" :title="t('tip.compass')">
           <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
@@ -229,7 +230,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       </div>
       <AtmosphereFx />
       <ArmyLegend />
-      <EventPanel />
+      <EventPanel v-if="!showTerrain3D" />
       <FiguresPanel v-if="showFigures" @close="showFigures = false" />
       <EventIndex v-if="showIndex" @close="showIndex = false" />
 

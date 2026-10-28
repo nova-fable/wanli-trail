@@ -1,173 +1,235 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { AttributionControl, Map as MapLibreMap, NavigationControl, setWorkerUrl } from 'maplibre-gl'
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { ARMIES } from '../mock'
+import { ARMIES, STRENGTH_TOTAL, strengthAt, strengthText } from '../mock'
+import { armyVisible, situationVisible } from '../composables/useLayers'
+import { BASEMAPS } from '../composables/useMapBase'
+import { halt, openEvent, play, playback, seek, toggle } from '../composables/usePlayback'
+import { MARKER_MODE } from '../core/enums'
 import { useI18n } from '../core/i18n'
-
-setWorkerUrl(workerUrl)
+import { parseDate, formatCnDate } from '../utils/geo'
+import { createTerrain3D, TERRAIN3D_SCENES } from '../map/terrain3d'
+import ArmyInsetMap from './ArmyInsetMap.vue'
+import EventPanel from './EventPanel.vue'
 
 const { t } = useI18n()
 const emit = defineEmits(['close'])
 const mapEl = ref(null)
-const activeScene = ref('jiajin')
+const activeScene = ref('overview')
+const toolsOpen = ref(window.innerWidth > 768)
+const insetArmies = ARMIES.filter((army) => army.key !== 'first')
+const armyProgress = reactive(
+  Object.fromEntries(ARMIES.map((army) => [army.key, { started: false, done: false, pct: 0 }])),
+)
+const strengthRows = computed(() =>
+  ARMIES.map((army) => ({ army, count: strengthAt(army.key, playback.time) })),
+)
+const strengthTotal = computed(() => {
+  const total = strengthRows.value.reduce((sum, row) => sum + (row.count || 0), 0)
+  return total > 0 ? strengthText(total) : '—'
+})
+const basemapAttribution = computed(
+  () => BASEMAPS.find((item) => item.key === playback.basemap)?.attribution || BASEMAPS[0].attribution,
+)
 
-const SCENES = [
-  {
-    key: 'jiajin',
-    center: [102.65, 30.72],
-    zoom: 7.4,
-    bearing: 15,
-    pitch: 68,
-  },
-  {
-    key: 'grassland',
-    center: [103.2, 33.15],
-    zoom: 7.2,
-    bearing: 0,
-    pitch: 68,
-  },
-]
+let terrainMap = null
+let disposed = false
 
-let map = null
-
-function sceneFor(key) {
-  return SCENES.find((scene) => scene.key === key) || SCENES[0]
+function updateMap(force = false) {
+  terrainMap?.update(playback.time, {
+    force,
+    playing: playback.playing,
+    follow: playback.follow,
+    panelEvent: playback.panelEvent,
+    markerMode: playback.markerMode,
+    armyVisible,
+    situationVisible,
+  })
 }
 
-function flyToScene(key) {
-  activeScene.value = key
-  const scene = sceneFor(key)
-  map?.flyTo({
-    center: scene.center,
-    zoom: scene.zoom,
-    bearing: scene.bearing,
-    pitch: scene.pitch,
-    duration: 1200,
-  })
+function onProgress(key, status) {
+  const current = armyProgress[key]
+  if (current.started !== status.started) current.started = status.started
+  if (current.done !== status.done) current.done = status.done
+  if (current.pct !== status.pct) current.pct = status.pct
+}
+
+function statusText(army) {
+  const status = armyProgress[army.key]
+  if (!status.started) return t('legend.status.idle')
+  if (status.done) return t('legend.status.done')
+  return t('legend.status.marching', { pct: status.pct })
+}
+
+function selectScene(scene) {
+  activeScene.value = scene.key
+  playback.follow = false
+  terrainMap?.flyToScene(scene.key)
+}
+
+function showLecture(event) {
+  halt()
+  seek(parseDate(event.date))
+  openEvent(event)
+  terrainMap?.closePopup()
+}
+
+function playFromEvent(event) {
+  halt()
+  playback.follow = true
+  seek(parseDate(event.date))
+  terrainMap?.closePopup()
+  play()
 }
 
 onMounted(async () => {
   await nextTick()
-  map = new MapLibreMap({
-    container: mapEl.value,
-    center: SCENES[0].center,
-    zoom: SCENES[0].zoom,
-    bearing: SCENES[0].bearing,
-    pitch: SCENES[0].pitch,
-    maxPitch: 82,
-    maxZoom: 14,
-    style: {
-      version: 8,
-      sources: {
-        basemap: {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          maxzoom: 19,
-          attribution: '© OpenStreetMap contributors',
-        },
-        terrain: {
-          type: 'raster-dem',
-          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          maxzoom: 15,
-          encoding: 'terrarium',
-          attribution: 'Elevation data © AWS Open Data / Tilezen',
-        },
-      },
-      layers: [
-        { id: 'basemap', type: 'raster', source: 'basemap' },
-        {
-          id: 'terrain-hillshade',
-          type: 'hillshade',
-          source: 'terrain',
-          paint: {
-            'hillshade-shadow-color': '#574832',
-            'hillshade-highlight-color': '#fff3d5',
-            'hillshade-accent-color': '#8d7959',
-            'hillshade-exaggeration': 0.35,
-          },
-        },
-      ],
-      terrain: { source: 'terrain', exaggeration: 1.35 },
-      sky: {},
+  const { preparedRoutes } = await import('../composables/useRoutes')
+  if (disposed || !mapEl.value) return
+  terrainMap = createTerrain3D(mapEl.value, {
+    routes: preparedRoutes,
+    basemaps: BASEMAPS,
+    basemap: playback.basemap,
+    t,
+    onReady: () => {
+      updateMap(true)
     },
-    attributionControl: false,
-  })
-  map.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
-  map.addControl(new AttributionControl({ compact: true }), 'bottom-right')
-
-  map.on('load', () => {
-    map.addSource('army-routes', {
-      type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: ARMIES.map((army) => ({
-          type: 'Feature',
-          properties: { key: army.key, color: army.color },
-          geometry: {
-            type: 'LineString',
-            coordinates: army.route.map(({ lat, lng }) => [lng, lat]),
-          },
-        })),
-      },
-    })
-    map.addLayer({
-      id: 'army-routes-casing',
-      type: 'line',
-      source: 'army-routes',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': '#fff9e9',
-        'line-width': ['interpolate', ['linear'], ['zoom'], 5, 2.5, 10, 5],
-        'line-opacity': 0.85,
-      },
-    })
-    map.addLayer({
-      id: 'army-routes',
-      type: 'line',
-      source: 'army-routes',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': ['get', 'color'],
-        'line-width': ['interpolate', ['linear'], ['zoom'], 5, 1.5, 10, 3],
-        'line-opacity': 0.95,
-      },
-    })
+    onUserMove: () => {
+      if (playback.follow) playback.follow = false
+    },
+    onEventLecture: showLecture,
+    onEventPlay: playFromEvent,
+    onProgress,
   })
 })
 
+watch(
+  () => [
+    playback.time,
+    playback.playing,
+    playback.follow,
+    playback.markerMode,
+    playback.panelEvent?.id,
+  ],
+  () => updateMap(!playback.playing),
+)
+watch(
+  () => playback.basemap,
+  (key) => terrainMap?.setBasemap(key),
+)
+watch(armyVisible, () => updateMap(true), { deep: true })
+watch(situationVisible, () => updateMap(true), { deep: true })
 onBeforeUnmount(() => {
-  map?.remove()
-  map = null
+  disposed = true
+  terrainMap?.destroy()
+  terrainMap = null
 })
 </script>
 
 <template>
   <section class="terrain3d" :aria-label="t('terrain3d.title')">
     <div ref="mapEl" class="terrain3d-map"></div>
-    <div class="terrain3d-tools">
+    <div class="terrain3d-main-label">{{ t('terrain3d.mainView') }}</div>
+    <div class="terrain3d-compact-controls" v-if="!toolsOpen">
+      <button @click="toolsOpen = true">{{ t('terrain3d.settings') }}</button>
+      <button :aria-label="t('close')" @click="emit('close')">×</button>
+    </div>
+    <div v-show="toolsOpen" class="terrain3d-tools">
       <div class="terrain3d-head">
         <div>
           <h2>{{ t('terrain3d.title') }}</h2>
           <p>{{ t('terrain3d.note') }}</p>
         </div>
+        <button class="terrain3d-close" :aria-label="t('terrain3d.collapse')" @click="toolsOpen = false">−</button>
         <button class="terrain3d-close" :aria-label="t('close')" @click="emit('close')">×</button>
       </div>
+
+      <div class="terrain3d-time">
+        <strong>{{ formatCnDate(playback.time) }}</strong>
+        <button :title="playback.playing ? t('tip.pause') : t('tip.play')" @click="toggle">
+          {{ playback.playing ? '❚❚' : '▶' }}
+        </button>
+      </div>
+
       <div class="terrain3d-scenes">
         <button
-          v-for="scene in SCENES"
+          v-for="scene in TERRAIN3D_SCENES"
           :key="scene.key"
           :class="{ on: activeScene === scene.key }"
-          @click="flyToScene(scene.key)"
+          @click="selectScene(scene)"
         >
           {{ t(`terrain3d.scene.${scene.key}`) }}
         </button>
       </div>
       <p class="terrain3d-caption">{{ t(`terrain3d.caption.${activeScene}`) }}</p>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('terrain3d.routeLayers') }}</h3>
+        <button
+          v-for="army in ARMIES"
+          :key="army.key"
+          class="terrain3d-layer"
+          :class="{ off: !armyVisible[army.key] }"
+          @click="armyVisible[army.key] = !armyVisible[army.key]"
+        >
+          <i :style="{ background: army.color }"></i>
+          <span>{{ army.short }}</span>
+          <small>{{ statusText(army) }}</small>
+        </button>
+        <div class="terrain3d-strength">
+          <div class="terrain3d-strength-total">
+            <strong>{{ strengthTotal }}</strong>
+            <small>{{ t('legend.strengthRange', { from: STRENGTH_TOTAL.start, to: STRENGTH_TOTAL.end }) }}</small>
+          </div>
+          <div v-for="row in strengthRows" :key="row.army.key" class="terrain3d-strength-row">
+            <b :style="{ color: row.army.color }">{{ row.army.short }}</b>
+            <span>{{ row.count == null ? '—' : strengthText(row.count) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('legend.display') }}</h3>
+        <div class="terrain3d-modes">
+          <button
+            :class="{ on: playback.markerMode === MARKER_MODE.MARCH }"
+            @click="playback.markerMode = MARKER_MODE.MARCH"
+          >
+            {{ t('legend.mode.march') }}
+          </button>
+          <button
+            :class="{ on: playback.markerMode === MARKER_MODE.ALL }"
+            @click="playback.markerMode = MARKER_MODE.ALL"
+          >
+            {{ t('legend.mode.all') }}
+          </button>
+        </div>
+      </section>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('terrain3d.situationLayers') }}</h3>
+        <div class="terrain3d-situation">
+          <button
+            v-for="layer in ['zones', 'kmt', 'japan', 'stories', 'rivers']"
+            :key="layer"
+            :class="{ off: !situationVisible[layer] }"
+            @click="situationVisible[layer] = !situationVisible[layer]"
+          >
+            {{ t(`legend.item.${layer}.name`) }}
+          </button>
+        </div>
+      </section>
     </div>
-    <div class="terrain3d-attribution">{{ t('terrain3d.source') }}</div>
+    <div class="army-insets" :aria-label="t('terrain3d.parallel')">
+      <ArmyInsetMap
+        v-for="army in insetArmies"
+        :key="army.key"
+        :army="army"
+        :status="statusText(army)"
+        :visible="armyVisible[army.key]"
+      />
+    </div>
+    <EventPanel />
+    <div class="terrain3d-attribution">{{ t('terrain3d.source', { basemap: basemapAttribution }) }}</div>
   </section>
 </template>

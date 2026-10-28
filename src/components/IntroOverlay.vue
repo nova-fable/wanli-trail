@@ -15,7 +15,7 @@
  */
 import { computed } from 'vue'
 import { ARMIES, EVENTS } from '../mock'
-import { preparedRoutes } from '../composables/useLayers'
+import { preparedRoutes } from '../composables/useRoutes'
 import { T_START, T_END } from '../composables/usePlayback'
 import { DAY_MS } from '../utils/geo'
 import { EVENT_INDEX } from '../core/constants/history'

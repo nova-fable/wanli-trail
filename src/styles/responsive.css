@@ -8,6 +8,8 @@
 }
 @media (max-width: 768px) {
   .app-header { overflow-x: auto; }
+  .app-footer { padding: 0 8px 8px; }
+  .timeline-dock { width: calc(100vw - 16px); }
   .pill-toggle { padding: 4px 9px; font-size: 11px; }
   .army-legend { width: 190px; font-size: 11px; }
   .event-panel,
@@ -24,5 +26,32 @@
   .help-card { bottom: 242px; width: min(268px, calc(100vw - 36px)); }
   .subtitle-text { font-size: 13px; padding: 5px 16px; }
   .leaflet-bottom.leaflet-right { bottom: 150px; }
+  .terrain3d-main-label { top: 52px; font-size: 10px; }
+  .terrain3d-tools { width: min(320px, calc(100vw - 28px)); }
+  .terrain3d-attribution { max-width: 45%; font-size: 9px; }
+  .army-insets {
+    top: auto;
+    right: 8px;
+    bottom: 165px;
+    left: 8px;
+    width: auto;
+    height: clamp(78px, 19vh, 132px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+    gap: 5px;
+  }
+  .army-inset-heading { flex-wrap: wrap; gap: 0 4px; padding: 3px 5px; font-size: 9px; }
+  .army-inset-status { font-size: 9px; }
+  .terrain3d .event-panel {
+    top: 90px;
+    right: auto;
+    left: 8px;
+    max-height: max(140px, calc(100% - 265px - clamp(78px, 19vh, 132px)));
+  }
 }
-
+@media (max-width: 480px) {
+  .tl-top { gap: 8px; }
+  .tl-speed button { min-width: 27px; padding: 3px; }
+  .tl-continuous { padding: 4px 6px; }
+  .tl-date .date-main { font-size: 12px; letter-spacing: 0; }
+}

@@ -42,6 +42,9 @@
   color: #f4e9d2;
   font: 700 11px var(--serif);
   letter-spacing: 1px;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
 }
@@ -198,6 +201,7 @@
   gap: 8px;
 }
 .army-inset {
+  position: relative;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -225,6 +229,21 @@
 .army-inset-map .leaflet-tile-pane { filter: sepia(0.3) saturate(0.78) brightness(1.03); }
 .army-inset-map.inset-follow .leaflet-map-pane { transition: transform 0.16s linear; }
 .army-inset.is-hidden .army-inset-map { opacity: 0.45; }
+.army-inset-hint {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  z-index: 801;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(24, 28, 31, 0.8);
+  color: #f4e9d2;
+  font-size: 10px;
+  pointer-events: none;
+}
+.army-inset-select { position: absolute; inset: 0; z-index: 800; width: 100%; height: 100%; }
+.army-inset-select:hover { box-shadow: inset 0 0 0 2px var(--accent); }
+.army-inset-select:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .terrain3d .event-panel { z-index: 3; right: 296px; }
 .terrain3d-attribution {
   position: absolute;

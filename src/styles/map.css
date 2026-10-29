@@ -478,6 +478,7 @@
 }
 .walker.done .w-badge::after { content: ' ✓'; }
 .walker.done .w-flag { fill: #9aa3b0; }
+.terrain3d-army-marker .w-badge { order: -1; margin: 0 0 1px; }
 
 /* 地图上的事件标记 */
 /* ===== 左上图例 ===== */

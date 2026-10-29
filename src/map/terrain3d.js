@@ -20,9 +20,11 @@ import {
 } from '../mock'
 import { BLOCKADE_COLOR, RIVER_COLOR, ZONE_COLOR } from '../core/constants/colors'
 import { MARKER_MODE } from '../core/enums'
-import { endOfDay, parseDate, positionAt } from '../utils/geo'
+import { DAY_MS, endOfDay, parseDate, positionAt } from '../utils/geo'
 import { inWindow } from '../utils/date'
+import { walkerMarkup } from './icons'
 import { primaryArmyPosition } from './parallel'
+import { createWalkerMotion, resetWalkerMotion, updateWalkerDirection } from './walkerMotion'
 
 setWorkerUrl(workerUrl)
 
@@ -254,8 +256,16 @@ export function createTerrain3D(
     })
 
     ARMIES.forEach((army) => {
-      const element = makeMarker('terrain3d-army-marker', army.short, army.name, army.color)
-      armyMarkers.set(army.key, new Marker({ element, anchor: 'bottom' }))
+      const element = document.createElement('div')
+      element.className = 'terrain3d-army-marker'
+      element.title = army.name
+      element.innerHTML = walkerMarkup(army)
+      armyMarkers.set(army.key, {
+        marker: new Marker({ element, anchor: 'bottom' }),
+        walker: element.querySelector('.walker'),
+        lean: element.querySelector('.w-lean'),
+        motion: createWalkerMotion(),
+      })
     })
   }
 
@@ -424,7 +434,7 @@ export function createTerrain3D(
     for (const army of ARMIES) {
       const visibility = visibleArmies[army.key] ? 'visible' : 'none'
       map.setLayoutProperty(`army-route-${army.key}`, 'visibility', visibility)
-      const marker = armyMarkers.get(army.key)
+      const { marker } = armyMarkers.get(army.key)
       if (!visibleArmies[army.key]) marker.remove()
     }
   }
@@ -436,11 +446,21 @@ export function createTerrain3D(
       const route = routes[army.key]
       const position = positionAt(route, time, { noTravel: true })
       positions[army.key] = position
-      const marker = armyMarkers.get(army.key)
+      const { marker, walker, lean, motion } = armyMarkers.get(army.key)
       if (position.started && state.armyVisible[army.key]) {
+        if (time < lastTime || time - lastTime > 14 * DAY_MS) resetWalkerMotion(motion)
+        if (motion.lastHead) {
+          const previous = map.project([motion.lastHead[1], motion.lastHead[0]])
+          const current = map.project([position.head[1], position.head[0]])
+          updateWalkerDirection(motion, current.x - previous.x, current.y - previous.y)
+        }
+        motion.lastHead = position.head
+        const walking = state.playing && !position.done
+        walker.classList.toggle('walking', walking)
+        walker.classList.toggle('done', position.done)
+        lean.style.transform = `scaleX(${motion.dir}) rotate(${motion.dir * (walking ? 10 : 0)}deg)`
         marker.setLngLat([position.head[1], position.head[0]])
         if (!marker.getElement().isConnected) marker.addTo(map)
-        marker.getElement().classList.toggle('done', position.done)
         if (now - lastProgressUpdate >= 220 || position.idx !== progressIndexes[army.key] || time < lastTime || state.force) {
           const coordinates = route.pts.slice(0, position.idx).map((point) => [point.lng, point.lat])
           coordinates.push([position.head[1], position.head[0]])
@@ -455,6 +475,7 @@ export function createTerrain3D(
         }
       } else {
         marker.remove()
+        resetWalkerMotion(motion)
       }
       progressIndexes[army.key] = position.idx
       onProgress?.(army.key, {
@@ -540,7 +561,7 @@ export function createTerrain3D(
     closePopup()
     for (const { marker } of eventMarkers) marker.remove()
     for (const { marker } of situationMarkers) marker.remove()
-    for (const marker of armyMarkers.values()) marker.remove()
+    for (const { marker } of armyMarkers.values()) marker.remove()
     map.remove()
   }
 

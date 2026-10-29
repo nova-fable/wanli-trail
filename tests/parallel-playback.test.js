@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { after, test } from 'node:test'
 import { createServer } from 'vite'
 import { primaryArmyPosition } from '../src/map/parallel.js'
+import { createWalkerMotion, resetWalkerMotion, updateWalkerDirection } from '../src/map/walkerMotion.js'
 
 const vite = await createServer({
   configFile: false,
@@ -45,4 +46,17 @@ test('seeking backwards restores the earlier troop positions and states', () => 
   assert.equal(afterArrival.done, true)
   assert.deepEqual(rewind.head, during.head)
   assert.equal(rewind.idx, during.idx)
+})
+
+test('walker direction follows horizontal movement and resets after a jump', () => {
+  const motion = createWalkerMotion()
+  updateWalkerDirection(motion, -4, 0)
+  assert.equal(motion.dir, -1)
+  updateWalkerDirection(motion, 0, 40)
+  assert.equal(motion.dir, -1)
+  for (let i = 0; i < 30; i++) updateWalkerDirection(motion, 8, 0)
+  assert.equal(motion.dir, 1)
+  motion.lastHead = [1, 2]
+  resetWalkerMotion(motion)
+  assert.deepEqual(motion, { lastHead: null, dir: 1, emaX: 0, emaY: 0 })
 })

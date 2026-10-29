@@ -13,14 +13,11 @@ import { EVENT_TYPES } from '../mock'
 import { EV_SHAPES, WALKER_ICON } from '../core/constants/icons'
 
 /**
- * 行军小红军图标：SVG 组合人物（帽徽/背包/行军旗/四肢）+ 部队臂章；
- * 四肢与躯干的动画钩子类（walking/done/w-lean）由 SandboxMap.render 逐帧驱动
+ * 行军小红军标记内容，供 2D 和 3D 地图共用。
  * @param {object} army ARMIES 成员（color/short）
  */
-export function walkerIcon(army) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="walker" style="--ac:${army.color}">
+export function walkerMarkup(army) {
+  return `<div class="walker" style="--ac:${army.color}">
       <div class="w-lean"><div class="w-figure">
         <svg viewBox="0 0 34 42" width="34" height="42" aria-hidden="true">
           <ellipse class="w-shadow" cx="14" cy="39" rx="8" ry="2.4"/>
@@ -38,7 +35,13 @@ export function walkerIcon(army) {
         </svg>
       </div></div>
       <span class="w-badge">${army.short}</span>
-    </div>`,
+    </div>`
+}
+
+export function walkerIcon(army) {
+  return L.divIcon({
+    className: '',
+    html: walkerMarkup(army),
     iconSize: WALKER_ICON.SIZE,
     iconAnchor: WALKER_ICON.ANCHOR,
   })

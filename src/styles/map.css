@@ -156,8 +156,7 @@
 }
 .terrain3d-modes button.on { border-color: #a76d2e; background: rgba(188, 132, 57, 0.18); color: #57391c; }
 .terrain3d-event-marker,
-.terrain3d-context-marker,
-.terrain3d-army-marker {
+.terrain3d-context-marker {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,17 +184,7 @@
   font: 700 10px var(--sans);
 }
 .terrain3d-context-marker.story-marker { border-radius: 4px 10px 4px 10px; color: #493719; }
-.terrain3d-army-marker {
-  min-width: 42px;
-  height: 25px;
-  padding: 0 6px;
-  border: 2px solid #fff9e9;
-  border-radius: 6px;
-  background: var(--marker-color);
-  color: white;
-  font: 700 11px var(--sans);
-}
-.terrain3d-army-marker.done { filter: grayscale(0.8); }
+.terrain3d-army-marker { pointer-events: none; }
 .army-insets {
   position: absolute;
   top: 62px;

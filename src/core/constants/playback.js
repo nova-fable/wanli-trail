@@ -18,3 +18,11 @@ export const PLAYBACK = {
 export const FOLLOW = {
   ZOOMS: { 0.5: 6, 1: 6, 2: 5, 4: 4 },
 }
+
+/** 三维主视图的部队聚焦视角与飞行时长 */
+export const TERRAIN_FOLLOW = {
+  FOCUS_ZOOM: 7.2,
+  FOCUS_MS: 2400,
+  UPDATE_MS: 1400,
+  EASE_MS: 1500,
+}

@@ -27,12 +27,18 @@ test('several armies progress independently at the same playback time', () => {
   assert.notDeepEqual(positions.fourth.head, positions.n25.head)
 })
 
-test('main camera never switches to another army when the first is unavailable', () => {
+test('main camera follows only the selected visible army, including before departure', () => {
   const first = { started: true, head: [1, 2] }
-  const positions = { first, fourth: { started: true, head: [3, 4] } }
-  assert.equal(primaryArmyPosition(positions, { first: true, fourth: true }), first)
-  assert.equal(primaryArmyPosition(positions, { first: false, fourth: true }), null)
-  assert.equal(primaryArmyPosition({ ...positions, first: { started: false } }, { first: true }), null)
+  const fourth = { started: true, head: [3, 4] }
+  const second = { started: false, head: [5, 6] }
+  const n25 = { started: true, done: true, head: [7, 8] }
+  const positions = { first, fourth, second, n25 }
+  assert.equal(primaryArmyPosition(positions, { first: true, fourth: true }, 'first'), first)
+  assert.equal(primaryArmyPosition(positions, { first: true, fourth: true }, 'fourth'), fourth)
+  assert.equal(primaryArmyPosition(positions, { second: true }, 'second'), second)
+  assert.equal(primaryArmyPosition(positions, { n25: true }, 'n25'), n25)
+  assert.equal(primaryArmyPosition(positions, { first: true, fourth: false }, 'fourth'), null)
+  assert.equal(primaryArmyPosition(positions, { missing: true }, 'missing'), null)
 })
 
 test('seeking backwards restores the earlier troop positions and states', () => {

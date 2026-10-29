@@ -15,9 +15,12 @@ import EventPanel from './EventPanel.vue'
 const { t } = useI18n()
 const emit = defineEmits(['close'])
 const mapEl = ref(null)
-const activeScene = ref('overview')
+const mainLabelEl = ref(null)
+const activeScene = ref(null)
 const toolsOpen = ref(window.innerWidth > 768)
-const insetArmies = ARMIES.filter((army) => army.key !== 'first')
+const selectedArmy = ref('first')
+const mainArmy = computed(() => ARMIES.find((army) => army.key === selectedArmy.value))
+const insetArmies = computed(() => ARMIES.filter((army) => army.key !== selectedArmy.value))
 const armyProgress = reactive(
   Object.fromEntries(ARMIES.map((army) => [army.key, { started: false, done: false, pct: 0 }])),
 )
@@ -40,6 +43,7 @@ function updateMap(force = false) {
     force,
     playing: playback.playing,
     follow: playback.follow,
+    selectedArmy: selectedArmy.value,
     panelEvent: playback.panelEvent,
     markerMode: playback.markerMode,
     armyVisible,
@@ -67,6 +71,14 @@ function selectScene(scene) {
   terrainMap?.flyToScene(scene.key)
 }
 
+function selectArmy(army) {
+  armyVisible[army.key] = true
+  selectedArmy.value = army.key
+  activeScene.value = null
+  playback.follow = true
+  nextTick(() => mainLabelEl.value?.focus({ preventScroll: true }))
+}
+
 function showLecture(event) {
   halt()
   seek(parseDate(event.date))
@@ -83,6 +95,7 @@ function playFromEvent(event) {
 }
 
 onMounted(async () => {
+  playback.follow = true
   await nextTick()
   const { preparedRoutes } = await import('../composables/useRoutes')
   if (disposed || !mapEl.value) return
@@ -95,7 +108,10 @@ onMounted(async () => {
       updateMap(true)
     },
     onUserMove: () => {
-      if (playback.follow) playback.follow = false
+      if (playback.follow) {
+        playback.follow = false
+        updateMap(true)
+      }
     },
     onEventLecture: showLecture,
     onEventPlay: playFromEvent,
@@ -108,6 +124,7 @@ watch(
     playback.time,
     playback.playing,
     playback.follow,
+    selectedArmy.value,
     playback.markerMode,
     playback.panelEvent?.id,
   ],
@@ -119,6 +136,9 @@ watch(
 )
 watch(armyVisible, () => updateMap(true), { deep: true })
 watch(situationVisible, () => updateMap(true), { deep: true })
+watch(() => playback.follow, (follow) => {
+  if (follow) activeScene.value = null
+})
 onBeforeUnmount(() => {
   disposed = true
   terrainMap?.destroy()
@@ -129,7 +149,11 @@ onBeforeUnmount(() => {
 <template>
   <section class="terrain3d" :aria-label="t('terrain3d.title')">
     <div ref="mapEl" class="terrain3d-map"></div>
-    <div class="terrain3d-main-label">{{ t('terrain3d.mainView') }}</div>
+    <div ref="mainLabelEl" class="terrain3d-main-label" tabindex="-1">
+      {{ t('terrain3d.mainView', { army: mainArmy.name }) }} ·
+      {{ armyVisible[mainArmy.key] ? statusText(mainArmy) : t('terrain3d.hidden') }}
+      <template v-if="!playback.follow"> · {{ t('terrain3d.freeCamera') }}</template>
+    </div>
     <div class="terrain3d-compact-controls" v-if="!toolsOpen">
       <button @click="toolsOpen = true">{{ t('terrain3d.settings') }}</button>
       <button :aria-label="t('close')" @click="emit('close')">×</button>
@@ -161,7 +185,9 @@ onBeforeUnmount(() => {
           {{ t(`terrain3d.scene.${scene.key}`) }}
         </button>
       </div>
-      <p class="terrain3d-caption">{{ t(`terrain3d.caption.${activeScene}`) }}</p>
+      <p class="terrain3d-caption">
+        {{ activeScene ? t(`terrain3d.caption.${activeScene}`) : t(playback.follow ? 'terrain3d.caption.follow' : 'terrain3d.caption.manual') }}
+      </p>
 
       <section class="terrain3d-section">
         <h3>{{ t('terrain3d.routeLayers') }}</h3>
@@ -227,6 +253,7 @@ onBeforeUnmount(() => {
         :army="army"
         :status="statusText(army)"
         :visible="armyVisible[army.key]"
+        @select="selectArmy(army)"
       />
     </div>
     <EventPanel />

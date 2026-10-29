@@ -1,4 +1,3 @@
-export function primaryArmyPosition(positions, visibility) {
-  const first = positions.first
-  return visibility.first && first?.started ? first : null
+export function primaryArmyPosition(positions, visibility, selectedArmy) {
+  return visibility[selectedArmy] ? positions[selectedArmy] || null : null
 }

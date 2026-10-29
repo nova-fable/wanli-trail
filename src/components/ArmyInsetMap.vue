@@ -13,6 +13,7 @@ const props = defineProps({
   status: { type: String, required: true },
   visible: { type: Boolean, required: true },
 })
+const emit = defineEmits(['select'])
 const { t } = useI18n()
 const mapEl = ref(null)
 const route = preparedRoutes[props.army.key]
@@ -106,5 +107,12 @@ onBeforeUnmount(() => {
       <span class="army-inset-status">{{ visible ? status : t('terrain3d.hidden') }}</span>
     </div>
     <div ref="mapEl" class="army-inset-map" :aria-label="`${army.name} · ${t('terrain3d.insetMap')}`"></div>
+    <span class="army-inset-hint" aria-hidden="true">{{ t('terrain3d.switch') }} ↗</span>
+    <button
+      class="army-inset-select"
+      :aria-label="t('terrain3d.selectArmy', { army: army.name })"
+      :title="t('terrain3d.selectArmy', { army: army.name })"
+      @click="emit('select')"
+    ></button>
   </article>
 </template>

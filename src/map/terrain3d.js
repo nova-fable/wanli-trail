@@ -19,6 +19,7 @@ import {
   ZONES,
 } from '../mock'
 import { BLOCKADE_COLOR, RIVER_COLOR, ZONE_COLOR } from '../core/constants/colors'
+import { TERRAIN_FOLLOW } from '../core/constants/playback'
 import { MARKER_MODE } from '../core/enums'
 import { DAY_MS, endOfDay, parseDate, positionAt } from '../utils/geo'
 import { inWindow } from '../utils/date'
@@ -29,6 +30,7 @@ import { createWalkerMotion, resetWalkerMotion, updateWalkerDirection } from './
 setWorkerUrl(workerUrl)
 
 const EARTH_RADIUS_KM = 6371
+const linearEasing = (t) => t
 
 export const TERRAIN3D_SCENES = [
   { key: 'overview', center: [106.5, 32.5], zoom: 4.5, bearing: 0, pitch: 54 },
@@ -163,7 +165,11 @@ export function createTerrain3D(
   let lastArmyVisibility = ''
   let lastProgressUpdate = -Infinity
   let lastFollowUpdate = -Infinity
-  let followingFirst = false
+  let followingArmy = null
+  let followTransitionUntil = 0
+  let followTimer = null
+  let latestFollowState = null
+  let latestFollowPositions = null
   let lastUpdateAt = -Infinity
   let lastTime = -Infinity
   const eventMarkers = []
@@ -494,30 +500,56 @@ export function createTerrain3D(
     return positions
   }
 
-  function updateFollow(positions, state, now) {
-    if (!state.follow || !state.armyVisible.first) {
-      followingFirst = false
-      return
-    }
-    if (!state.force && now - lastFollowUpdate < 450) return
-    const target = primaryArmyPosition(positions, state.armyVisible)
+  function updateFollow(positions, state, now, pausedSeek = false) {
+    const target = state.follow && primaryArmyPosition(positions, state.armyVisible, state.selectedArmy)
     if (!target) {
-      followingFirst = false
+      followingArmy = null
+      followTransitionUntil = 0
+      clearTimeout(followTimer)
+      followTimer = null
       return
     }
     const center = [target.head[1], target.head[0]]
-    if (!followingFirst) {
-      followingFirst = true
-      const options = { center, zoom: Math.max(map.getZoom(), 5.8) }
-      if (document.hidden) map.jumpTo(options)
-      else map.easeTo({ ...options, duration: 900, essential: true })
-      lastFollowUpdate = now + 450
+    if (followingArmy !== state.selectedArmy) {
+      followingArmy = state.selectedArmy
+      clearTimeout(followTimer)
+      const options = { center, zoom: TERRAIN_FOLLOW.FOCUS_ZOOM }
+      if (document.hidden) {
+        followTransitionUntil = 0
+        map.jumpTo(options)
+      } else {
+        followTransitionUntil = now + TERRAIN_FOLLOW.FOCUS_MS
+        map.flyTo({ ...options, duration: TERRAIN_FOLLOW.FOCUS_MS, essential: true })
+        followTimer = setTimeout(() => {
+          followTimer = null
+          followTransitionUntil = 0
+          if (ready && latestFollowState && latestFollowPositions) {
+            const latestTarget = latestFollowState.follow &&
+              primaryArmyPosition(latestFollowPositions, latestFollowState.armyVisible, latestFollowState.selectedArmy)
+            if ((document.hidden || map.isMoving()) && latestTarget && followingArmy === latestFollowState.selectedArmy) {
+              map.jumpTo({ center: [latestTarget.head[1], latestTarget.head[0]], zoom: TERRAIN_FOLLOW.FOCUS_ZOOM })
+            }
+            updateFollow(latestFollowPositions, latestFollowState, performance.now())
+          }
+        }, TERRAIN_FOLLOW.FOCUS_MS + 50)
+      }
+      lastFollowUpdate = now
       return
     }
+    if (pausedSeek) {
+      clearTimeout(followTimer)
+      followTimer = null
+      const zoom = now < followTransitionUntil ? TERRAIN_FOLLOW.FOCUS_ZOOM : map.getZoom()
+      followTransitionUntil = 0
+      map.jumpTo({ center, zoom })
+      lastFollowUpdate = now
+      return
+    }
+    if (now < followTransitionUntil || (!state.force && now - lastFollowUpdate < TERRAIN_FOLLOW.UPDATE_MS)) return
     const current = map.getCenter()
     if (Math.abs(current.lng - center[0]) + Math.abs(current.lat - center[1]) < 0.00001) return
     if (document.hidden) map.jumpTo({ center })
-    else map.easeTo({ center, duration: 420, essential: true })
+    else map.easeTo({ center, duration: TERRAIN_FOLLOW.EASE_MS, easing: linearEasing, essential: true })
     lastFollowUpdate = now
   }
 
@@ -542,8 +574,11 @@ export function createTerrain3D(
     syncArmyVisibility(state.armyVisible)
     updateSituation(time, state.situationVisible)
     updateEventMarkers(time, state.markerMode, state.panelEvent, state.armyVisible)
+    const pausedSeek = !state.playing && !state.panelEvent && Number.isFinite(lastTime) && time !== lastTime
     const positions = updateProgress(time, state, now)
-    updateFollow(positions, state, now)
+    latestFollowState = state
+    latestFollowPositions = positions
+    updateFollow(positions, state, now, pausedSeek)
   }
 
   function flyToScene(sceneKey) {
@@ -558,6 +593,8 @@ export function createTerrain3D(
   }
 
   function destroy() {
+    ready = false
+    clearTimeout(followTimer)
     closePopup()
     for (const { marker } of eventMarkers) marker.remove()
     for (const { marker } of situationMarkers) marker.remove()

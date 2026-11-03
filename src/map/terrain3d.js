@@ -39,6 +39,9 @@ export const TERRAIN3D_SCENES = [
   { key: 'grassland', center: [103.2, 33.15], zoom: 7.7, bearing: 0, pitch: 66, exaggeration: 1.55 },
 ]
 
+/** 标记分级缩放：低于此缩放只显 major 事件并隐藏态势点，防俯瞰视野标记堆叠 */
+const MARKER_DETAIL_ZOOM = 6
+
 function feature(geometry, properties) {
   return { type: 'Feature', geometry, properties }
 }
@@ -180,6 +183,7 @@ export function createTerrain3D(
   let followTimer = null
   let latestFollowState = null
   let latestFollowPositions = null
+  let latestTime = -Infinity
   let lastUpdateAt = -Infinity
   let lastTime = -Infinity
   const eventMarkers = []
@@ -390,7 +394,8 @@ export function createTerrain3D(
   }
 
   function updateSituation(time, visibility) {
-    const key = `${dateKey(time)}:${visibility.zones}:${visibility.kmt}:${visibility.japan}:${visibility.stories}:${visibility.rivers}`
+    const detail = map.getZoom() >= MARKER_DETAIL_ZOOM
+    const key = `${dateKey(time)}:${detail}:${visibility.zones}:${visibility.kmt}:${visibility.japan}:${visibility.stories}:${visibility.rivers}`
     if (key === lastSituationKey) return
     lastSituationKey = key
     const zones = visibility.zones
@@ -423,6 +428,7 @@ export function createTerrain3D(
     map.getSource('situation-lines')?.setData(collection(lines))
     for (const marker of situationMarkers) {
       const visible =
+        detail &&
         visibility[marker.group] &&
         marker.from <= time &&
         time <= marker.to
@@ -431,13 +437,16 @@ export function createTerrain3D(
   }
 
   function updateEventMarkers(time, markerMode, panelEvent, visibleArmies) {
-    const key = `${dateKey(time)}:${markerMode}:${panelEvent?.id || ''}:${ARMIES.map((army) => visibleArmies[army.key]).join('')}`
+    const detail = map.getZoom() >= MARKER_DETAIL_ZOOM
+    const key = `${dateKey(time)}:${detail}:${markerMode}:${panelEvent?.id || ''}:${ARMIES.map((army) => visibleArmies[army.key]).join('')}`
     if (key === lastEventKey) return
     lastEventKey = key
     for (const { event, element } of eventMarkers) {
       const passed = parseDate(event.date) <= time
       const armyOn = event.army === 'all' || visibleArmies[event.army]
-      const visible = armyOn && (markerMode === MARKER_MODE.ALL || passed || event.id === panelEvent?.id)
+      const focus = event.id === panelEvent?.id
+      const tiered = detail || event.major || focus
+      const visible = armyOn && tiered && (markerMode === MARKER_MODE.ALL || passed || focus)
       element.style.display = visible ? '' : 'none'
       element.classList.toggle('future', !passed)
     }
@@ -564,6 +573,14 @@ export function createTerrain3D(
   }
 
   map.on('dragstart', () => onUserMove?.())
+  // 缩放跨过 MARKER_DETAIL_ZOOM 只换标记层级、不动时间与图层开关，故单独重刷两级缓存
+  map.on('zoomend', () => {
+    if (!ready || !latestFollowState) return
+    lastSituationKey = ''
+    lastEventKey = ''
+    updateSituation(latestTime, latestFollowState.situationVisible)
+    updateEventMarkers(latestTime, latestFollowState.markerMode, latestFollowState.panelEvent, latestFollowState.armyVisible)
+  })
   map.on('resize', () => {
     const maxPitch = maxPitchForViewport(container.clientHeight)
     if (map.getPitch() > maxPitch) map.setPitch(maxPitch)
@@ -586,6 +603,7 @@ export function createTerrain3D(
     updateEventMarkers(time, state.markerMode, state.panelEvent, state.armyVisible)
     const pausedSeek = !state.playing && !state.panelEvent && Number.isFinite(lastTime) && time !== lastTime
     const positions = updateProgress(time, state, now)
+    latestTime = time
     latestFollowState = state
     latestFollowPositions = positions
     updateFollow(positions, state, now, pausedSeek)

@@ -32,10 +32,11 @@ setWorkerUrl(workerUrl)
 const EARTH_RADIUS_KM = 6371
 const linearEasing = (t) => t
 
+/** exaggeration 为场景级地形夸张：俯瞰宜平实，近景山地拉高显脊线 */
 export const TERRAIN3D_SCENES = [
-  { key: 'overview', center: [106.5, 32.5], zoom: 4.5, bearing: 0, pitch: 54 },
-  { key: 'jiajin', center: [102.65, 30.72], zoom: 8, bearing: 15, pitch: 66 },
-  { key: 'grassland', center: [103.2, 33.15], zoom: 7.7, bearing: 0, pitch: 66 },
+  { key: 'overview', center: [106.5, 32.5], zoom: 4.5, bearing: 0, pitch: 54, exaggeration: 1.35 },
+  { key: 'jiajin', center: [102.65, 30.72], zoom: 8, bearing: 15, pitch: 66, exaggeration: 1.8 },
+  { key: 'grassland', center: [103.2, 33.15], zoom: 7.7, bearing: 0, pitch: 66, exaggeration: 1.55 },
 ]
 
 function feature(geometry, properties) {
@@ -145,12 +146,21 @@ export function createTerrain3D(
             'hillshade-shadow-color': '#574832',
             'hillshade-highlight-color': '#fff3d5',
             'hillshade-accent-color': '#8d7959',
-            'hillshade-exaggeration': 0.35,
+            'hillshade-exaggeration': 0.5,
           },
         },
       ],
-      terrain: { source: 'terrain', exaggeration: 1.35 },
-      sky: {},
+      terrain: { source: 'terrain', exaggeration: TERRAIN3D_SCENES[0].exaggeration },
+      // 天空三层取羊皮纸同族暖色（天顶冷灰蓝 → 地平线米黄 → 雾霭沙色），
+      // 与画布 sepia 滤镜（styles/map.css .terrain3d-map）叠加后仍保持暖调
+      sky: {
+        'sky-color': '#7f98b4',
+        'horizon-color': '#ecdcba',
+        'fog-color': '#d8c6a0',
+        'sky-horizon-blend': 0.7,
+        'horizon-fog-blend': 0.6,
+        'fog-ground-blend': 0.22,
+      },
     },
     attributionControl: false,
   })
@@ -583,6 +593,7 @@ export function createTerrain3D(
 
   function flyToScene(sceneKey) {
     const scene = TERRAIN3D_SCENES.find((item) => item.key === sceneKey) || TERRAIN3D_SCENES[0]
+    map.setTerrain({ source: 'terrain', exaggeration: scene.exaggeration })
     map.flyTo({
       center: scene.center,
       zoom: scene.zoom,

@@ -88,10 +88,13 @@ export const RIVERS = [{ name: '金沙江', pts: [[lat, lng], ...] }, ...]
 
 ## 天气叙事（mock/weather.js）
 
-- `WEATHER_NODES`：`{ id, event, name, kind, desc }`；`event` 锚定事件 id（日期随事件，不重复记），
-  `kind` 取 `WEATHER_KINDS`（snow/rain/cold/heat/frost）；按锚定事件日期升序书写。
-- `SEASONS`：`{ from, to, name, desc }` 季节带，以中央红军主线为序；时间窗不得重叠、无空洞
-  （契约同 PHASES），覆盖出发前夕至会宁会师。
+- `WEATHER_NODES`：`{ id, event, from, to, name, kind, desc }`；`event` 锚定事件 id，
+  `from/to` 为天气过程时段（驱动屏幕天气特效，须覆盖锚定事件日期）；`kind` 取
+  `WEATHER_KINDS`（snow/rain/cold/heat/frost）；按锚定事件日期升序书写。
+  **不同 kind 的时间窗不得重叠**（特效层全局唯一，同时命中多个节点时取 from 最晚者）。
+- `SEASONS`：`{ from, to, name, tone, desc }` 季节带，以中央红军主线为序；时间窗不得重叠、
+  无空洞（契约同 PHASES），覆盖出发前夕至会宁会师；`tone` 取 `SEASON_TONES`
+  （autumn/winter/spring/summer/rain/highland），配色落位在样式层与三维调色，数据只给语义。
 - 条目依据分**史料 / 诗词 / 气候背景**三类，与条目的对应关系见 docs/history/weather.md。
 
 ## 互引用自检清单
@@ -101,5 +104,6 @@ export const RIVERS = [{ name: '金沙江', pts: [[lat, lng], ...] }, ...]
 3. 各 routes date 单调不减
 4. quotes/phases 时间窗无重叠、无空洞（phases 需全程覆盖）
 5. STRENGTH 锚点日期升序、口径与 STRENGTH_TOTAL 自洽
-6. `weather.WEATHER_NODES.event` → `events.id` 全部存在；SEASONS 时间窗同第 4 条
+6. `weather.WEATHER_NODES.event` → `events.id` 全部存在且 `from ≤ 事件日期 ≤ to`；
+   不同 kind 时间窗不重叠；SEASONS 时间窗同第 4 条且 tone ∈ `SEASON_TONES`
 7. 改动同步 docs/history/* 与 docs/spirit/* 对应篇

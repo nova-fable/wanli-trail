@@ -53,6 +53,7 @@
  * 2. 各 `routes` 的 `date` 单调不减
  * 3. `quotes/phases` 时间窗无重叠、无空洞（phases 需覆盖 T_START→T_END 全程）
  * 4. `STRENGTH` 锚点升序且与 `STRENGTH_TOTAL` 口径自洽（出发 ≈ 18.6 万 / 到达 ≈ 5.6 万）
- * 5. `weather.WEATHER_NODES.event` → `events.id` 全部存在；`SEASONS` 时间窗同第 3 条契约
+ * 5. `weather.WEATHER_NODES.event` → `events.id` 存在且事件日期落在 `from/to` 内；
+ *    不同 kind 时间窗不重叠；`SEASONS` 时间窗同第 3 条契约且 tone ∈ `SEASON_TONES`
  */
 export {}

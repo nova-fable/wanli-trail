@@ -3,9 +3,10 @@
  *
  * 两组导出：
  * - `WEATHER_NODES` 天气叙事节点——锚定关键事件（`event` 引用事件 id），提炼史料记载的
- *   天气实况及其对行军的影响；与 quotes.js 诗词字幕分工：字幕呈原文，本域呈天气叙事。
+ *   天气实况及其对行军的影响；`from/to` 为天气过程时段（驱动屏幕天气特效）。
+ *   与 quotes.js 诗词字幕分工：字幕呈原文，本域呈天气叙事。
  * - `SEASONS` 季节带——沿中央红军主线的季节推进（时间窗互不重叠、全程覆盖，
- *   契约同 phases.js），供季节氛围按日期取带。
+ *   契约同 phases.js）；`tone` 为季节色调语义（驱动地图样式随时间推移）。
  *
  * 依据分三类（成文档与条目对应关系见 docs/history/weather.md）：
  * 史料（战史/回忆录记载）、诗词（毛泽东诗词等一手文学实录）、气候背景（地方气候常态）。
@@ -20,10 +21,21 @@ export const WEATHER_KINDS = {
   frost: '霜风',
 }
 
+/** 季节色调徽记（key 为 SEASONS 的 tone 取值；配色由样式层与三维调色各自落位） */
+export const SEASON_TONES = {
+  autumn: '秋',
+  winter: '冬',
+  spring: '春',
+  summer: '夏',
+  rain: '雨',
+  highland: '雪线',
+}
+
 export const WEATHER_NODES = [
   {
     id: 'w-dushu',
     event: 'n25-dushu',
+    from: '1934-11-24', to: '1934-11-26',
     name: '独树镇风雪',
     kind: 'snow',
     desc: '寒潮突至，雨雪交加。红二十五军将士衣衫单薄、手指冻僵，几乎拉不开枪栓，仍血战突围——严寒与敌袭同为生死考验。',
@@ -31,6 +43,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-xiangjiang',
     event: 'f1-xiangjiang',
+    from: '1934-11-27', to: '1934-12-02',
     name: '湘江初冬水寒',
     kind: 'cold',
     desc: '时值初冬，湘江水寒刺骨。红军冒死涉渡、血战五昼夜突破第四道封锁线，此役后由出发时的八万六千余人锐减至三万余人。',
@@ -38,6 +51,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-wujiang',
     event: 'f1-wujiang',
+    from: '1934-12-30', to: '1935-01-06',
     name: '乌江岁寒',
     kind: 'cold',
     desc: '1935年元旦前后，黔北隆冬阴冷，乌江峡谷水急岸陡。红军冒寒砍竹扎筏强渡天险，突破乌江后直取遵义。',
@@ -45,6 +59,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-loushan',
     event: 'f1-chishui2',
+    from: '1935-02-25', to: '1935-02-28',
     name: '娄山关霜晨',
     kind: 'frost',
     desc: '「西风烈，长空雁叫霜晨月」——《忆秦娥·娄山关》实录战后晓行所见：二月黔北，西风凛冽、晓霜凝野，红军再夺雄关。',
@@ -52,6 +67,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-jinsha',
     event: 'f1-jinshajiang',
+    from: '1935-05-01', to: '1935-05-09',
     name: '金沙江干热',
     kind: 'heat',
     desc: '「金沙水拍云崖暖」。五月上旬，金沙江河谷干热少雨、水流湍急，红军靠几只小船昼夜摆渡，从容过江。',
@@ -59,6 +75,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-luding',
     event: 'f1-luding',
+    from: '1935-05-24', to: '1935-05-30',
     name: '大渡河雨夜奔袭',
     kind: 'rain',
     desc: '初夏的大渡河谷多雨路滑。红四团昼夜兼程二百四十里，冒雨踏泥抢先到达泸定桥，二十二勇士攀索夺桥。',
@@ -66,6 +83,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-f4snow',
     event: 'f4-xiaogong',
+    from: '1935-06-01', to: '1935-06-20',
     name: '红四翻越雪山',
     kind: 'snow',
     desc: '为迎接中央红军，红四方面军1935年5至6月西进懋功，翻越终年积雪的雪山垭口——两路大军在风雪中南北对进。',
@@ -73,6 +91,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-jiajinshan',
     event: 'f1-jiajinshan',
+    from: '1935-06-07', to: '1935-06-28',
     name: '夹金山六月雪',
     kind: 'snow',
     desc: '六月翻越海拔四千余米的夹金山：山上风雪交加、时有冰雹，山脚与山顶判若两季。将士衣衫单薄，以辣椒水御寒，许多人长眠雪线之上。',
@@ -80,6 +99,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-grassland',
     event: 'f1-grassland',
+    from: '1935-08-15', to: '1935-09-05',
     name: '草地雨季',
     kind: 'rain',
     desc: '8月下旬正值松潘草地雨季：阴雨连绵、夜雨成冰、时有冰雹，昼夜温差极大。红军缺粮少衣，在泥沼中跋涉六七天——「风雨侵衣骨更硬」。',
@@ -87,6 +107,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-baizhangguan',
     event: 'f4-baizhangguan',
+    from: '1935-11-10', to: '1935-11-22',
     name: '百丈关骤寒',
     kind: 'cold',
     desc: '1935年11月中旬，百丈关大战七昼夜。时值初冬、气温骤降，衣着单薄的红军在寒风中与敌反复争夺阵地。',
@@ -94,6 +115,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-zhiluo',
     event: 'f1-zhiluozhen',
+    from: '1935-11-19', to: '1935-11-24',
     name: '直罗镇初寒',
     kind: 'cold',
     desc: '11月下旬，陕北黄土高原已入初冬，寒气逼人。直罗镇一仗粉碎国民党军对陕甘苏区的第三次「围剿」，成为把革命大本营奠基西北的「奠基礼」。',
@@ -101,6 +123,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-dongzheng',
     event: 'f1-dongzheng',
+    from: '1936-02-18', to: '1936-02-28',
     name: '黄河隆冬渡河',
     kind: 'cold',
     desc: '1936年2月，红军东征突破黄河防线，时值隆冬，河谷寒风刺骨。红军夜渡天险，把抗日的旗帜插向山西。',
@@ -108,6 +131,7 @@ export const WEATHER_NODES = [
   {
     id: 'w-wumeng',
     event: 'f2-wumeng',
+    from: '1936-02-25', to: '1936-03-15',
     name: '乌蒙春寒',
     kind: 'cold',
     desc: '1936年2至3月，红二、六军团在乌蒙山区回旋千里。海拔两三千米的高寒山区春寒料峭、雨雪无常——「乌蒙磅礴走泥丸」。',
@@ -115,13 +139,15 @@ export const WEATHER_NODES = [
   {
     id: 'w-shigu',
     event: 'f2-shigu',
+    from: '1936-04-23', to: '1936-05-02',
     name: '石鼓渡江·暮春',
     kind: 'heat',
     desc: '4月底，金沙江河谷已入暮春，天气渐热、江流湍急。红二、六军团从石鼓一线从容渡江北上。',
   },
   {
     id: 'w-caodi2',
-    event: 'f4-ganzi',
+    event: 'f2-found',
+    from: '1936-07-05', to: '1936-08-28',
     name: '再过草地·雨季',
     kind: 'rain',
     desc: '1936年7至8月，红二、四方面军联袂北上，再次穿越松潘草地。正值盛夏雨季，泥沼与冰雹依旧是最大的敌人。',
@@ -132,52 +158,52 @@ export const WEATHER_NODES = [
 export const SEASONS = [
   {
     from: '1934-10-16', to: '1934-12-15',
-    name: '深秋',
+    name: '深秋', tone: 'autumn',
     desc: '赣南、湘南、桂北：秋雨渐凉，越向西北行越近寒冬。',
   },
   {
     from: '1934-12-16', to: '1935-02-25',
-    name: '隆冬',
+    name: '隆冬', tone: 'winter',
     desc: '黔北、川南：阴冷凝冻，「天无三日晴」，乌江赤水一线水寒。',
   },
   {
     from: '1935-02-26', to: '1935-04-30',
-    name: '冬末春初',
+    name: '冬末春初', tone: 'winter',
     desc: '黔北、滇东：西风渐暖，娄山关上晓霜犹重，滇东已入干季。',
   },
   {
     from: '1935-05-01', to: '1935-06-10',
-    name: '暮春初夏',
+    name: '暮春初夏', tone: 'spring',
     desc: '金沙江、大渡河谷：干热少雨、河水湍急，河谷炎炎而高山犹寒。',
   },
   {
     from: '1935-06-11', to: '1935-07-20',
-    name: '盛夏·雪山',
+    name: '盛夏·雪山', tone: 'highland',
     desc: '川西高原：盛夏如冬，雪山风雪冰雹不断，草地即将入雨季。',
   },
   {
     from: '1935-07-21', to: '1935-09-16',
-    name: '雨季',
+    name: '雨季', tone: 'rain',
     desc: '松潘草地：阴雨连绵、夜雨成冰、沼泽泥泞，是一年中最恶劣的时段。',
   },
   {
     from: '1935-09-17', to: '1935-11-30',
-    name: '秋高转寒',
+    name: '秋高转寒', tone: 'autumn',
     desc: '陇东、陕北：天高云淡，10月起寒潮渐频，11月已见初冬景象。',
   },
   {
     from: '1935-12-01', to: '1936-04-30',
-    name: '寒冬',
+    name: '寒冬', tone: 'winter',
     desc: '陕北高原与黄河沿线：干冷多风，河谷封冻风雪，乌蒙山区春寒更甚。',
   },
   {
     from: '1936-05-01', to: '1936-07-15',
-    name: '春末夏初',
+    name: '春末夏初', tone: 'spring',
     desc: '陇东、康北：高原渐暖，雪山垭口仍有积雪，草地将再度入雨季。',
   },
   {
     from: '1936-07-16', to: '1936-10-31',
-    name: '夏末初秋',
+    name: '夏末初秋', tone: 'summer',
     desc: '草地雨季再过，甘南陕北秋意日浓；10月会师时西北已寒。',
   },
 ]

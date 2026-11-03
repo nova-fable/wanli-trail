@@ -707,6 +707,33 @@
 
 
 
+/* ===== 季节色调（data-tone 驱动的底图叠色层，随季节推移渐变换色） ===== */
+.season-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  transition: background 1.6s linear;
+}
+.map-wrap[data-tone='autumn'] .season-tint {
+  background: linear-gradient(180deg, rgba(226, 178, 108, 0.16), rgba(200, 150, 90, 0.1) 55%, rgba(180, 130, 80, 0.14));
+}
+.map-wrap[data-tone='winter'] .season-tint {
+  background: linear-gradient(180deg, rgba(178, 198, 222, 0.2), rgba(196, 210, 228, 0.12) 60%, rgba(170, 186, 208, 0.16));
+}
+.map-wrap[data-tone='spring'] .season-tint {
+  background: linear-gradient(180deg, rgba(222, 208, 150, 0.12), rgba(228, 214, 160, 0.08) 60%, rgba(216, 196, 140, 0.1));
+}
+.map-wrap[data-tone='summer'] .season-tint {
+  background: linear-gradient(180deg, rgba(236, 210, 150, 0.14), rgba(232, 204, 148, 0.08) 60%, rgba(222, 190, 130, 0.12));
+}
+.map-wrap[data-tone='rain'] .season-tint {
+  background: linear-gradient(180deg, rgba(120, 138, 122, 0.22), rgba(128, 146, 130, 0.14) 55%, rgba(104, 122, 108, 0.2));
+}
+.map-wrap[data-tone='highland'] .season-tint {
+  background: linear-gradient(180deg, rgba(168, 190, 216, 0.18), rgba(190, 202, 218, 0.1) 55%, rgba(176, 192, 212, 0.14));
+}
+
 /* ===== 雪山 / 草地氛围 ===== */
 .fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 940; overflow: hidden; }
 .fx-tint { position: absolute; inset: 0; }

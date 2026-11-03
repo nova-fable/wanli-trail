@@ -24,6 +24,7 @@ import { playback, toggle, restart, startTour, startExplore, seek, closePanel } 
 import { BASEMAPS } from './composables/useMapBase'
 import { EVENTS } from './mock'
 import { initPrefs } from './composables/usePrefs'
+import { useWeather } from './composables/useWeather'
 import { route, navigate, initRouter, ROUTES } from './router'
 import { useI18n } from './core/i18n'
 // DAY_MS 单源在 utils：本文件此前自带一份 86400000 字面量副本
@@ -37,6 +38,9 @@ initPrefs()
 initRouter()
 
 const { t, lang: langState, setLang, langs } = useI18n()
+
+// 季节色调随播放时间推移（map-wrap 的 data-tone 驱动底图叠色层）
+const { tone: seasonTone } = useWeather()
 
 /** 浮层开关：人物志 / 事件总览 / 操作指南 / 长征精神结语 */
 const showFigures = ref(false)
@@ -214,8 +218,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </header>
 
     <main class="app-main">
-      <div v-show="!showTerrain3D" class="map-wrap">
+      <div v-show="!showTerrain3D" class="map-wrap" :data-tone="seasonTone">
         <SandboxMap :active="!showTerrain3D" />
+        <div class="season-tint"></div>
         <div class="parchment-fx"></div>
         <div class="map-compass" :title="t('tip.compass')">
           <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">

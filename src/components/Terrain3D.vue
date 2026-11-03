@@ -7,12 +7,14 @@ import { BASEMAPS } from '../composables/useMapBase'
 import { halt, openEvent, play, playback, seek, toggle } from '../composables/usePlayback'
 import { MARKER_MODE } from '../core/enums'
 import { useI18n } from '../core/i18n'
+import { useWeather } from '../composables/useWeather'
 import { parseDate, formatCnDate } from '../utils/geo'
 import { createTerrain3D, TERRAIN3D_SCENES } from '../map/terrain3d'
 import ArmyInsetMap from './ArmyInsetMap.vue'
 import EventPanel from './EventPanel.vue'
 
 const { t } = useI18n()
+const { tone: seasonTone } = useWeather()
 const emit = defineEmits(['close'])
 const mapEl = ref(null)
 const mainLabelEl = ref(null)
@@ -104,6 +106,7 @@ onMounted(async () => {
     routes: preparedRoutes,
     basemaps: BASEMAPS,
     basemap: playback.basemap,
+    tone: seasonTone.value,
     t,
     onReady: () => {
       updateMap(true)
@@ -136,6 +139,7 @@ watch(
   () => playback.basemap,
   (key) => terrainMap?.setBasemap(key),
 )
+watch(seasonTone, (tone) => terrainMap?.setSeason(tone))
 watch(armyVisible, () => updateMap(true), { deep: true })
 watch(situationVisible, () => updateMap(true), { deep: true })
 watch(() => playback.follow, (follow) => {

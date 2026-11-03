@@ -33,6 +33,31 @@ const EARTH_RADIUS_KM = 6371
 const linearEasing = (t) => t
 const followZoomFor = (speed) => TERRAIN_FOLLOW.ZOOMS[speed] || TERRAIN_FOLLOW.ZOOMS[1]
 
+/**
+ * 季节色调（key 见 mock 的 SEASON_TONES）：天空三层与底图饱和/对比随季节推移，
+ * 与画布 sepia 滤镜（styles/map.css .terrain3d-map）叠加后保持羊皮纸基调。
+ */
+const TERRAIN3D_TONES = {
+  autumn: { sky: '#7f98b4', horizon: '#ecdcba', fog: '#d8c6a0', fogBlend: 0.22, saturation: -0.06, contrast: 0 },
+  winter: { sky: '#8ba0b8', horizon: '#e6e4dc', fog: '#cdd0cb', fogBlend: 0.28, saturation: -0.34, contrast: -0.02 },
+  spring: { sky: '#86a4bb', horizon: '#eee0bc', fog: '#dcc9a2', fogBlend: 0.2, saturation: 0.04, contrast: 0.01 },
+  summer: { sky: '#7c9cbe', horizon: '#f0dcae', fog: '#dcc49a', fogBlend: 0.2, saturation: 0.12, contrast: 0.02 },
+  rain: { sky: '#6c7a86', horizon: '#b9b4a2', fog: '#a49e8c', fogBlend: 0.45, saturation: -0.4, contrast: 0.06 },
+  highland: { sky: '#7590b2', horizon: '#e9e2cc', fog: '#d3ccb8', fogBlend: 0.26, saturation: -0.15, contrast: 0.03 },
+}
+
+function skySpec(tone) {
+  const c = TERRAIN3D_TONES[tone] || TERRAIN3D_TONES.autumn
+  return {
+    'sky-color': c.sky,
+    'horizon-color': c.horizon,
+    'fog-color': c.fog,
+    'sky-horizon-blend': 0.7,
+    'horizon-fog-blend': 0.6,
+    'fog-ground-blend': c.fogBlend,
+  }
+}
+
 /** exaggeration 为场景级地形夸张：俯瞰宜平实，近景山地拉高显脊线 */
 export const TERRAIN3D_SCENES = [
   { key: 'overview', center: [106.5, 32.5], zoom: 4.5, bearing: 0, pitch: 54, exaggeration: 1.35 },
@@ -100,7 +125,7 @@ function tilesFor(basemap) {
 
 export function createTerrain3D(
   container,
-  { routes, basemaps, basemap, t, onReady, onUserMove, onEventLecture, onEventPlay, onProgress },
+  { routes, basemaps, basemap, tone, t, onReady, onUserMove, onEventLecture, onEventPlay, onProgress },
 ) {
   const map = new MapLibreMap({
     container,
@@ -141,6 +166,10 @@ export function createTerrain3D(
           type: 'raster',
           source: `basemap-${item.key}`,
           layout: { visibility: item.key === basemap ? 'visible' : 'none' },
+          paint: {
+            'raster-saturation': (TERRAIN3D_TONES[tone] || TERRAIN3D_TONES.autumn).saturation,
+            'raster-contrast': (TERRAIN3D_TONES[tone] || TERRAIN3D_TONES.autumn).contrast,
+          },
         })),
         {
           id: 'terrain-hillshade',
@@ -155,16 +184,7 @@ export function createTerrain3D(
         },
       ],
       terrain: { source: 'terrain', exaggeration: TERRAIN3D_SCENES[0].exaggeration },
-      // 天空三层取羊皮纸同族暖色（天顶冷灰蓝 → 地平线米黄 → 雾霭沙色），
-      // 与画布 sepia 滤镜（styles/map.css .terrain3d-map）叠加后仍保持暖调
-      sky: {
-        'sky-color': '#7f98b4',
-        'horizon-color': '#ecdcba',
-        'fog-color': '#d8c6a0',
-        'sky-horizon-blend': 0.7,
-        'horizon-fog-blend': 0.6,
-        'fog-ground-blend': 0.22,
-      },
+      sky: skySpec(tone),
     },
     attributionControl: false,
   })
@@ -173,6 +193,7 @@ export function createTerrain3D(
 
   let ready = false
   let selectedBasemap = basemap
+  let seasonTone = TERRAIN3D_TONES[tone] ? tone : 'autumn'
   let popup = null
   let lastSituationKey = ''
   let lastEventKey = ''
@@ -204,6 +225,22 @@ export function createTerrain3D(
     for (const item of basemaps) {
       map.setLayoutProperty(`basemap-${item.key}`, 'visibility', item.key === selectedBasemap ? 'visible' : 'none')
     }
+  }
+
+  function applySeasonTone() {
+    map.setSky(skySpec(seasonTone))
+    const c = TERRAIN3D_TONES[seasonTone]
+    for (const item of basemaps) {
+      map.setPaintProperty(`basemap-${item.key}`, 'raster-saturation', c.saturation)
+      map.setPaintProperty(`basemap-${item.key}`, 'raster-contrast', c.contrast)
+    }
+  }
+
+  function setSeason(next) {
+    const key = TERRAIN3D_TONES[next] ? next : 'autumn'
+    if (key === seasonTone) return
+    seasonTone = key
+    if (ready) applySeasonTone()
   }
 
   function addPopup(item, lngLat, event = null) {
@@ -598,6 +635,7 @@ export function createTerrain3D(
     addPointMarkers()
     ready = true
     setBasemap(selectedBasemap)
+    applySeasonTone()
     onReady?.()
   })
 
@@ -639,5 +677,5 @@ export function createTerrain3D(
     map.remove()
   }
 
-  return { update, setBasemap, flyToScene, closePopup, destroy }
+  return { update, setBasemap, setSeason, flyToScene, closePopup, destroy }
 }

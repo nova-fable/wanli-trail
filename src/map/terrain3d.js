@@ -31,6 +31,7 @@ setWorkerUrl(workerUrl)
 
 const EARTH_RADIUS_KM = 6371
 const linearEasing = (t) => t
+const followZoomFor = (speed) => TERRAIN_FOLLOW.ZOOMS[speed] || TERRAIN_FOLLOW.ZOOMS[1]
 
 /** exaggeration 为场景级地形夸张：俯瞰宜平实，近景山地拉高显脊线 */
 export const TERRAIN3D_SCENES = [
@@ -178,6 +179,7 @@ export function createTerrain3D(
   let lastArmyVisibility = ''
   let lastProgressUpdate = -Infinity
   let lastFollowUpdate = -Infinity
+  let lastFollowSpeed = null
   let followingArmy = null
   let followTransitionUntil = 0
   let followTimer = null
@@ -532,7 +534,7 @@ export function createTerrain3D(
     if (followingArmy !== state.selectedArmy) {
       followingArmy = state.selectedArmy
       clearTimeout(followTimer)
-      const options = { center, zoom: TERRAIN_FOLLOW.FOCUS_ZOOM }
+      const options = { center, zoom: followZoomFor(state.speed) }
       if (document.hidden) {
         followTransitionUntil = 0
         map.jumpTo(options)
@@ -546,29 +548,35 @@ export function createTerrain3D(
             const latestTarget = latestFollowState.follow &&
               primaryArmyPosition(latestFollowPositions, latestFollowState.armyVisible, latestFollowState.selectedArmy)
             if ((document.hidden || map.isMoving()) && latestTarget && followingArmy === latestFollowState.selectedArmy) {
-              map.jumpTo({ center: [latestTarget.head[1], latestTarget.head[0]], zoom: TERRAIN_FOLLOW.FOCUS_ZOOM })
+              map.jumpTo({ center: [latestTarget.head[1], latestTarget.head[0]], zoom: followZoomFor(latestFollowState.speed) })
             }
             updateFollow(latestFollowPositions, latestFollowState, performance.now())
           }
         }, TERRAIN_FOLLOW.FOCUS_MS + 50)
       }
+      lastFollowSpeed = state.speed
       lastFollowUpdate = now
       return
     }
     if (pausedSeek) {
       clearTimeout(followTimer)
       followTimer = null
-      const zoom = now < followTransitionUntil ? TERRAIN_FOLLOW.FOCUS_ZOOM : map.getZoom()
+      const zoom = now < followTransitionUntil ? followZoomFor(state.speed) : map.getZoom()
       followTransitionUntil = 0
       map.jumpTo({ center, zoom })
       lastFollowUpdate = now
       return
     }
-    if (now < followTransitionUntil || (!state.force && now - lastFollowUpdate < TERRAIN_FOLLOW.UPDATE_MS)) return
+    // 倍速变更立即补缩放重取景，其余时刻只跟中心、不夺用户缩放
+    const speedChanged = state.speed !== lastFollowSpeed
+    if (now < followTransitionUntil || (!state.force && !speedChanged && now - lastFollowUpdate < TERRAIN_FOLLOW.UPDATE_MS)) return
     const current = map.getCenter()
-    if (Math.abs(current.lng - center[0]) + Math.abs(current.lat - center[1]) < 0.00001) return
-    if (document.hidden) map.jumpTo({ center })
-    else map.easeTo({ center, duration: TERRAIN_FOLLOW.EASE_MS, easing: linearEasing, essential: true })
+    const drifted = Math.abs(current.lng - center[0]) + Math.abs(current.lat - center[1]) >= 0.00001
+    if (!speedChanged && !drifted) return
+    const options = speedChanged ? { center, zoom: followZoomFor(state.speed) } : { center }
+    if (document.hidden) map.jumpTo(options)
+    else map.easeTo({ ...options, duration: TERRAIN_FOLLOW.EASE_MS, easing: linearEasing, essential: true })
+    lastFollowSpeed = state.speed
     lastFollowUpdate = now
   }
 

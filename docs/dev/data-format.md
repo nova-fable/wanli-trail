@@ -86,6 +86,14 @@ export const RIVERS = [{ name: '金沙江', pts: [[lat, lng], ...] }, ...]
 - QUOTES：`{ from, to, text, note }`；时间窗不得重叠（_subtitle 逐条 find 取首个命中）；按 from 升序书写。
 - PHASES：`{ from, to, text }` 阶段叙述；同样不得重叠，覆盖 T_START→T_END 全程。
 
+## 天气叙事（mock/weather.js）
+
+- `WEATHER_NODES`：`{ id, event, name, kind, desc }`；`event` 锚定事件 id（日期随事件，不重复记），
+  `kind` 取 `WEATHER_KINDS`（snow/rain/cold/heat/frost）；按锚定事件日期升序书写。
+- `SEASONS`：`{ from, to, name, desc }` 季节带，以中央红军主线为序；时间窗不得重叠、无空洞
+  （契约同 PHASES），覆盖出发前夕至会宁会师。
+- 条目依据分**史料 / 诗词 / 气候背景**三类，与条目的对应关系见 docs/history/weather.md。
+
 ## 互引用自检清单
 
 1. `figures.firstEvent` → `events.id` 全部存在
@@ -93,4 +101,5 @@ export const RIVERS = [{ name: '金沙江', pts: [[lat, lng], ...] }, ...]
 3. 各 routes date 单调不减
 4. quotes/phases 时间窗无重叠、无空洞（phases 需全程覆盖）
 5. STRENGTH 锚点日期升序、口径与 STRENGTH_TOTAL 自洽
-6. 改动同步 docs/history/* 与 docs/spirit/* 对应篇
+6. `weather.WEATHER_NODES.event` → `events.id` 全部存在；SEASONS 时间窗同第 4 条
+7. 改动同步 docs/history/* 与 docs/spirit/* 对应篇

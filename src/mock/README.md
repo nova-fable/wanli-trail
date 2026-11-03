@@ -18,6 +18,7 @@
  *   figures.js          人物志（firstEvent 引用事件 id）
  *   strength.js         兵力锚点与 STRENGTH_TOTAL 口径
  *   phases.js quotes.js 时间轴叙述层（阶段字幕 / 诗词金句）
+ *   weather.js          天气叙事节点与季节带（锚定事件 id）
  *   rivers.js stories.js 江河要津走线 / 精神印记
  * ```
  *
@@ -52,5 +53,6 @@
  * 2. 各 `routes` 的 `date` 单调不减
  * 3. `quotes/phases` 时间窗无重叠、无空洞（phases 需覆盖 T_START→T_END 全程）
  * 4. `STRENGTH` 锚点升序且与 `STRENGTH_TOTAL` 口径自洽（出发 ≈ 18.6 万 / 到达 ≈ 5.6 万）
+ * 5. `weather.WEATHER_NODES.event` → `events.id` 全部存在；`SEASONS` 时间窗同第 3 条契约
  */
 export {}

@@ -1,33 +1,39 @@
 <!--
-  @file 环境氛围层：过雪山飘雪、过草地流雾（纯 CSS 动画，时间窗驱动）
+  @file 天气氛围层：屏幕雨雪风粒子（纯 CSS 动画，mock 天气节点时间窗驱动）
 -->
 <script setup>
-// 雪山 / 草地 环境氛围：过雪山飘雪、过草地流雾
 import { computed } from 'vue'
-import { playback } from '../composables/usePlayback'
-import { parseDate, endOfDay } from '../utils/geo'
-import { inWindow } from '../utils/date'
+import { useWeather } from '../composables/useWeather'
 
-// 时间窗预解析成时间戳，每帧只走 inWindow 的数值分支（endOfDay 语义：to 含当日）
-const WINDOWS = [
-  { kind: 'snow', from: '1935-06-07', to: '1935-06-28' }, // 中央红军翻夹金山等
-  { kind: 'snow', from: '1936-04-25', to: '1936-06-20' }, // 红二方面军翻雪山
-  { kind: 'grass', from: '1935-08-15', to: '1935-09-05' }, // 中央红军过草地
-  { kind: 'grass', from: '1936-07-05', to: '1936-08-28' }, // 二、四方面军过草地
-].map((w) => ({ ...w, fromT: parseDate(w.from), toT: endOfDay(w.to) }))
+// kind → 粒子形态：heat 不落粒子（干热由季节色调承担）
+const FX_BY_KIND = { snow: 'snow', rain: 'rain', cold: 'wind', frost: 'wind', heat: null }
 
-const kind = computed(() => {
-  const t = playback.time
-  const w = WINDOWS.find((w) => inWindow(w.fromT, w.toT, t))
-  return w ? w.kind : null
-})
+const { weatherNode } = useWeather()
+const fx = computed(() => (weatherNode.value ? FX_BY_KIND[weatherNode.value.kind] : null))
 
-const flakes = Array.from({ length: 18 }, (_, i) => ({
+// 粒子种子创建时定型，动画全走 CSS keyframes（无逐帧 JS；遮挡环境不依赖 rAF）
+const flakes = Array.from({ length: 36 }, (_, i) => ({
   left: (i * 53) % 100,
   delay: ((i * 0.37) % 3).toFixed(2),
   dur: 4 + (i % 5),
-  size: 2 + (i % 3),
+  size: 3 + (i % 3),
   drift: ((i * 17) % 40) - 20,
+}))
+
+const drops = Array.from({ length: 84 }, (_, i) => ({
+  left: (i * 37) % 100,
+  delay: ((i * 0.29) % 1.6).toFixed(2),
+  dur: (0.8 + (i % 5) * 0.14).toFixed(2),
+  len: 16 + (i % 4) * 8,
+  drift: -16 - (i % 4) * 8,
+  opacity: (0.35 + (i % 4) * 0.13).toFixed(2),
+}))
+
+const gusts = Array.from({ length: 24 }, (_, i) => ({
+  top: 6 + ((i * 61) % 82),
+  width: 110 + (i % 5) * 55,
+  delay: ((i * 0.53) % 3).toFixed(2),
+  dur: (2.2 + (i % 4) * 0.8).toFixed(2),
 }))
 
 const fogs = Array.from({ length: 4 }, (_, i) => ({
@@ -38,9 +44,9 @@ const fogs = Array.from({ length: 4 }, (_, i) => ({
 </script>
 
 <template>
-  <div v-if="kind" class="fx-layer" :class="kind">
-    <div class="fx-tint" :class="kind === 'snow' ? 'fx-cold' : 'fx-grassy'"></div>
-    <template v-if="kind === 'snow'">
+  <div v-if="fx" class="fx-layer" :class="`fx-${fx}`">
+    <div class="fx-tint" :class="fx === 'rain' ? 'fx-grassy' : 'fx-cold'"></div>
+    <template v-if="fx === 'snow'">
       <span
         v-for="(f, i) in flakes"
         :key="'s' + i"
@@ -55,12 +61,38 @@ const fogs = Array.from({ length: 4 }, (_, i) => ({
         }"
       ></span>
     </template>
+    <template v-else-if="fx === 'rain'">
+      <span
+        v-for="(d, i) in drops"
+        :key="'r' + i"
+        class="fx-drop"
+        :style="{
+          left: d.left + '%',
+          animationDelay: d.delay + 's',
+          animationDuration: d.dur + 's',
+          height: d.len + 'px',
+          opacity: d.opacity,
+          '--drift': d.drift + 'px',
+        }"
+      ></span>
+      <span
+        v-for="(g, i) in fogs"
+        :key="'f' + i"
+        class="fx-fog"
+        :style="{ left: g.left + '%', animationDelay: g.delay + 's', animationDuration: g.dur + 's' }"
+      ></span>
+    </template>
     <template v-else>
       <span
-        v-for="(f, i) in fogs"
-        :key="'g' + i"
-        class="fx-fog"
-        :style="{ left: f.left + '%', animationDelay: f.delay + 's', animationDuration: f.dur + 's' }"
+        v-for="(g, i) in gusts"
+        :key="'w' + i"
+        class="fx-gust"
+        :style="{
+          top: g.top + '%',
+          width: g.width + 'px',
+          animationDelay: g.delay + 's',
+          animationDuration: g.dur + 's',
+        }"
       ></span>
     </template>
   </div>

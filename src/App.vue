@@ -233,7 +233,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           </svg>
         </div>
       </div>
-      <AtmosphereFx />
+      <AtmosphereFx v-if="!showTerrain3D" />
       <ArmyLegend />
       <EventPanel v-if="!showTerrain3D" />
       <FiguresPanel v-if="showFigures" @close="showFigures = false" />

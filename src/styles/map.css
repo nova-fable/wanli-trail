@@ -772,3 +772,31 @@
   from { transform: translateX(-60px); opacity: 0.5; }
   to { transform: translateX(60px); opacity: 0.9; }
 }
+.fx-drop {
+  position: absolute;
+  top: -24px;
+  width: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, transparent, rgba(200, 216, 232, 0.8));
+  animation: drop-fall linear infinite;
+}
+@keyframes drop-fall {
+  0% { transform: translate(0, -24px) rotate(10deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(var(--drift, -16px), 106vh) rotate(10deg); opacity: 0.2; }
+}
+.fx-gust {
+  position: absolute;
+  left: 0;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(240, 244, 250, 0.68), transparent);
+  animation: gust-swipe linear infinite;
+}
+@keyframes gust-swipe {
+  0% { transform: translateX(-15vw) translateY(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  100% { transform: translateX(105vw) translateY(26px); opacity: 0; }
+}
+/* 三维视图内：粒子盖地形、不盖面板（工具/小地图/讲解卡 z 2—3） */
+.terrain3d .fx-layer { z-index: 1; }

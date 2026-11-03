@@ -11,6 +11,7 @@ import { useWeather } from '../composables/useWeather'
 import { parseDate, formatCnDate } from '../utils/geo'
 import { createTerrain3D, TERRAIN3D_SCENES } from '../map/terrain3d'
 import ArmyInsetMap from './ArmyInsetMap.vue'
+import AtmosphereFx from './AtmosphereFx.vue'
 import EventPanel from './EventPanel.vue'
 
 const { t } = useI18n()
@@ -155,6 +156,7 @@ onBeforeUnmount(() => {
 <template>
   <section class="terrain3d" :aria-label="t('terrain3d.title')">
     <div ref="mapEl" class="terrain3d-map"></div>
+    <AtmosphereFx />
     <div ref="mainLabelEl" class="terrain3d-main-label" tabindex="-1">
       {{ t('terrain3d.mainView', { army: mainArmy.name }) }} ·
       {{ armyVisible[mainArmy.key] ? statusText(mainArmy) : t('terrain3d.hidden') }}

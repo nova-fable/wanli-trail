@@ -18,7 +18,7 @@
  *   figures.js          人物志（firstEvent 引用事件 id）
  *   strength.js         兵力锚点与 STRENGTH_TOTAL 口径
  *   phases.js quotes.js 时间轴叙述层（阶段字幕 / 诗词金句）
- *   weather.js          天气叙事节点与季节带（锚定事件 id）
+ *   weather.js          天气叙事节点/季节带/雪山积雪示意（节点锚定事件 id）
  *   rivers.js stories.js 江河要津走线 / 精神印记
  * ```
  *

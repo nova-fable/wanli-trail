@@ -95,6 +95,8 @@ export const RIVERS = [{ name: '金沙江', pts: [[lat, lng], ...] }, ...]
 - `SEASONS`：`{ from, to, name, tone, desc }` 季节带，以中央红军主线为序；时间窗不得重叠、
   无空洞（契约同 PHASES），覆盖出发前夕至会宁会师；`tone` 取 `SEASON_TONES`
   （autumn/winter/spring/summer/rain/highland），配色落位在样式层与三维调色，数据只给语义。
+- `SNOW_CAPS`：`{ id, name, lat, lng, radius }` 雪山积雪示意（圆心+半径 km，几何口径同
+  态势苏区），三维雪线层取几何；坐标近似值、常年积雪为气候常态。
 - 条目依据分**史料 / 诗词 / 气候背景**三类，与条目的对应关系见 docs/history/weather.md。
 
 ## 互引用自检清单

@@ -35,4 +35,4 @@ export { STORIES } from './stories'
 // ===== 时间轴叙述层 =====
 export { default as PHASES } from './phases'
 export { QUOTES } from './quotes'
-export { WEATHER_NODES, WEATHER_KINDS, SEASONS } from './weather'
+export { WEATHER_NODES, WEATHER_KINDS, SEASONS, SEASON_TONES, SNOW_CAPS } from './weather'

@@ -15,7 +15,7 @@ import AtmosphereFx from './AtmosphereFx.vue'
 import EventPanel from './EventPanel.vue'
 
 const { t } = useI18n()
-const { tone: seasonTone } = useWeather()
+const { tone: seasonTone, weatherNode } = useWeather()
 const emit = defineEmits(['close'])
 const mapEl = ref(null)
 const mainLabelEl = ref(null)
@@ -122,6 +122,7 @@ onMounted(async () => {
     onEventPlay: playFromEvent,
     onProgress,
   })
+  terrainMap.setSnowStorm(weatherNode.value?.kind === 'snow')
 })
 
 watch(
@@ -141,6 +142,7 @@ watch(
   (key) => terrainMap?.setBasemap(key),
 )
 watch(seasonTone, (tone) => terrainMap?.setSeason(tone))
+watch(weatherNode, (node) => terrainMap?.setSnowStorm(node?.kind === 'snow'))
 watch(armyVisible, () => updateMap(true), { deep: true })
 watch(situationVisible, () => updateMap(true), { deep: true })
 watch(() => playback.follow, (follow) => {

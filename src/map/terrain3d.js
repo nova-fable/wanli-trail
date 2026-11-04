@@ -15,6 +15,7 @@ import {
   KMT_BLOCKADES,
   KMT_UNITS,
   RIVERS,
+  SNOW_CAPS,
   STORIES,
   ZONES,
 } from '../mock'
@@ -110,6 +111,25 @@ function makeMarker(className, label, title, color) {
 
 function dateKey(time) {
   return Math.floor((time + 8 * 60 * 60 * 1000) / 86400000)
+}
+
+/** fill 层无模糊属性：三圈同心雪斑外淡内浓叠出羽化（rest 常态 / storm 风雪时段） */
+const SNOW_BANDS = [
+  { id: 'snow-caps-outer', scale: 1, color: '#e6eef7', rest: 0.24, storm: 0.46 },
+  { id: 'snow-caps-mid', scale: 0.74, color: '#f0f6fb', rest: 0.3, storm: 0.56 },
+  { id: 'snow-caps-core', scale: 0.5, color: '#f9fcfe', rest: 0.38, storm: 0.72 },
+]
+
+/** 积雪斑几何：圆基 + 顶点确定性扰动（各圈同扰动保嵌套），读作自然雪面而非规整圆 */
+function snowBlob(cap, scale) {
+  const ring = circleCoordinates({ lat: cap.lat, lng: cap.lng, radius: cap.radius * scale })[0]
+  const phase = cap.lat * 3.1 + cap.lng * 2.2
+  return [
+    ring.map(([lng, lat], i) => {
+      const w = 1 + 0.13 * Math.sin(i * 2.7 + phase) + 0.07 * Math.sin(i * 5.3 + phase * 1.7)
+      return [cap.lng + (lng - cap.lng) * w, cap.lat + (lat - cap.lat) * w]
+    }),
+  ]
 }
 
 function maxPitchForViewport(height) {
@@ -243,6 +263,22 @@ export function createTerrain3D(
     if (ready) applySeasonTone()
   }
 
+  let snowStorm = false
+
+  function applySnowCaps() {
+    if (!ready) return
+    // 风雪时段雪面整体提亮（paint 默认过渡约 300ms 平滑换档）
+    for (const band of SNOW_BANDS) {
+      map.setPaintProperty(band.id, 'fill-opacity', snowStorm ? band.storm : band.rest)
+    }
+  }
+
+  function setSnowStorm(active) {
+    if (active === snowStorm) return
+    snowStorm = active
+    applySnowCaps()
+  }
+
   function addPopup(item, lngLat, event = null) {
     closePopup()
     const root = document.createElement('div')
@@ -329,6 +365,23 @@ export function createTerrain3D(
   }
 
   function addDataLayers() {
+    // 雪线层最先挂载：贴地形渲染于底图/晕渲之上、态势与路线之下
+    for (const band of SNOW_BANDS) {
+      map.addSource(band.id, {
+        type: 'geojson',
+        data: collection(
+          SNOW_CAPS.map((cap) =>
+            feature({ type: 'Polygon', coordinates: snowBlob(cap, band.scale) }, { id: cap.id }),
+          ),
+        ),
+      })
+      map.addLayer({
+        id: band.id,
+        type: 'fill',
+        source: band.id,
+        paint: { 'fill-color': band.color, 'fill-opacity': band.rest },
+      })
+    }
     map.addSource('army-routes', {
       type: 'geojson',
       data: collection(
@@ -636,6 +689,7 @@ export function createTerrain3D(
     ready = true
     setBasemap(selectedBasemap)
     applySeasonTone()
+    applySnowCaps()
     onReady?.()
   })
 
@@ -677,5 +731,5 @@ export function createTerrain3D(
     map.remove()
   }
 
-  return { update, setBasemap, setSeason, flyToScene, closePopup, destroy }
+  return { update, setBasemap, setSeason, setSnowStorm, flyToScene, closePopup, destroy }
 }

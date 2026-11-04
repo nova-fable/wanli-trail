@@ -1,5 +1,5 @@
 <!--
-  @file 天气氛围层：屏幕雨雪风粒子（纯 CSS 动画，mock 天气节点时间窗驱动）
+  @file 天气氛围层：整屏电影级染罩 + 雨雪风粒子（纯 CSS 动画，mock 天气节点时间窗驱动）
 -->
 <script setup>
 import { computed } from 'vue'
@@ -45,57 +45,60 @@ const fogs = Array.from({ length: 4 }, (_, i) => ({
 </script>
 
 <template>
-  <div v-if="fx" class="fx-layer" :class="`fx-${fx}`">
-    <div class="fx-tint" :class="fx === 'rain' ? 'fx-grassy' : 'fx-cold'"></div>
-    <template v-if="fx === 'snow'">
-      <span
-        v-for="(f, i) in flakes"
-        :key="'s' + i"
-        class="fx-flake"
-        :style="{
-          left: f.left + '%',
-          animationDelay: f.delay + 's',
-          animationDuration: f.dur + 's',
-          width: f.size + 'px',
-          height: f.size + 'px',
-          '--drift': f.drift + 'px',
-        }"
-      ></span>
-    </template>
-    <template v-else-if="fx === 'rain'">
-      <span
-        v-for="(d, i) in drops"
-        :key="'r' + i"
-        class="fx-drop"
-        :style="{
-          left: d.left + '%',
-          animationDelay: d.delay + 's',
-          animationDuration: d.dur + 's',
-          height: d.len + 'px',
-          width: d.width + 'px',
-          opacity: d.opacity,
-          '--drift': d.drift + 'px',
-        }"
-      ></span>
-      <span
-        v-for="(g, i) in fogs"
-        :key="'f' + i"
-        class="fx-fog"
-        :style="{ left: g.left + '%', animationDelay: g.delay + 's', animationDuration: g.dur + 's' }"
-      ></span>
-    </template>
-    <template v-else>
-      <span
-        v-for="(g, i) in gusts"
-        :key="'w' + i"
-        class="fx-gust"
-        :style="{
-          top: g.top + '%',
-          width: g.width + 'px',
-          animationDelay: g.delay + 's',
-          animationDuration: g.dur + 's',
-        }"
-      ></span>
-    </template>
-  </div>
+  <transition name="fx">
+    <div v-if="fx" class="fx-layer" :class="`fx-${fx}`">
+      <div class="fx-grade"></div>
+      <div class="fx-tint" :class="fx === 'rain' ? 'fx-grassy' : 'fx-cold'"></div>
+      <template v-if="fx === 'snow'">
+        <span
+          v-for="(f, i) in flakes"
+          :key="'s' + i"
+          class="fx-flake"
+          :style="{
+            left: f.left + '%',
+            animationDelay: f.delay + 's',
+            animationDuration: f.dur + 's',
+            width: f.size + 'px',
+            height: f.size + 'px',
+            '--drift': f.drift + 'px',
+          }"
+        ></span>
+      </template>
+      <template v-else-if="fx === 'rain'">
+        <span
+          v-for="(d, i) in drops"
+          :key="'r' + i"
+          class="fx-drop"
+          :style="{
+            left: d.left + '%',
+            animationDelay: d.delay + 's',
+            animationDuration: d.dur + 's',
+            height: d.len + 'px',
+            width: d.width + 'px',
+            opacity: d.opacity,
+            '--drift': d.drift + 'px',
+          }"
+        ></span>
+        <span
+          v-for="(g, i) in fogs"
+          :key="'f' + i"
+          class="fx-fog"
+          :style="{ left: g.left + '%', animationDelay: g.delay + 's', animationDuration: g.dur + 's' }"
+        ></span>
+      </template>
+      <template v-else>
+        <span
+          v-for="(g, i) in gusts"
+          :key="'w' + i"
+          class="fx-gust"
+          :style="{
+            top: g.top + '%',
+            width: g.width + 'px',
+            animationDelay: g.delay + 's',
+            animationDuration: g.dur + 's',
+          }"
+        ></span>
+      </template>
+    </div>
+  </transition>
 </template>

@@ -734,9 +734,28 @@
   background: linear-gradient(180deg, rgba(168, 190, 216, 0.3), rgba(190, 202, 218, 0.18) 55%, rgba(176, 192, 212, 0.25));
 }
 
-/* ===== 雪山 / 草地氛围 ===== */
+/* ===== 天气氛围：染罩 / 雪山 / 草地 ===== */
 .fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 940; overflow: hidden; }
 .fx-tint { position: absolute; inset: 0; }
+/* 电影级染罩：整屏压暗去饱和（只作用其下的地图，面板层级更高不受影响） */
+.fx-grade { position: absolute; inset: 0; }
+.fx-snow .fx-grade {
+  background: rgba(58, 78, 108, 0.16);
+  -webkit-backdrop-filter: saturate(0.7) brightness(0.93) contrast(1.05);
+  backdrop-filter: saturate(0.7) brightness(0.93) contrast(1.05);
+}
+.fx-rain .fx-grade {
+  background: rgba(38, 50, 46, 0.2);
+  -webkit-backdrop-filter: saturate(0.6) brightness(0.86) contrast(1.08);
+  backdrop-filter: saturate(0.6) brightness(0.86) contrast(1.08);
+}
+.fx-wind .fx-grade {
+  background: rgba(80, 92, 114, 0.14);
+  -webkit-backdrop-filter: saturate(0.78) brightness(0.94);
+  backdrop-filter: saturate(0.78) brightness(0.94);
+}
+.fx-enter-active, .fx-leave-active { transition: opacity 0.9s linear; }
+.fx-enter-from, .fx-leave-to { opacity: 0; }
 .fx-cold {
   background: radial-gradient(ellipse at 50% 0%, rgba(140, 180, 230, 0.3), transparent 65%),
     linear-gradient(180deg, rgba(160, 200, 240, 0.14), transparent 40%);

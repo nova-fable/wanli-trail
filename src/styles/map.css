@@ -716,47 +716,49 @@
   transition: background 1.6s linear;
 }
 .map-wrap[data-tone='autumn'] .season-tint {
-  background: linear-gradient(180deg, rgba(226, 178, 108, 0.16), rgba(200, 150, 90, 0.1) 55%, rgba(180, 130, 80, 0.14));
+  background: linear-gradient(180deg, rgba(226, 178, 108, 0.26), rgba(200, 150, 90, 0.16) 55%, rgba(180, 130, 80, 0.22));
 }
 .map-wrap[data-tone='winter'] .season-tint {
-  background: linear-gradient(180deg, rgba(178, 198, 222, 0.2), rgba(196, 210, 228, 0.12) 60%, rgba(170, 186, 208, 0.16));
+  background: linear-gradient(180deg, rgba(178, 198, 222, 0.34), rgba(196, 210, 228, 0.22) 60%, rgba(170, 186, 208, 0.28));
 }
 .map-wrap[data-tone='spring'] .season-tint {
-  background: linear-gradient(180deg, rgba(222, 208, 150, 0.12), rgba(228, 214, 160, 0.08) 60%, rgba(216, 196, 140, 0.1));
+  background: linear-gradient(180deg, rgba(222, 208, 150, 0.2), rgba(228, 214, 160, 0.14) 60%, rgba(216, 196, 140, 0.17));
 }
 .map-wrap[data-tone='summer'] .season-tint {
-  background: linear-gradient(180deg, rgba(236, 210, 150, 0.14), rgba(232, 204, 148, 0.08) 60%, rgba(222, 190, 130, 0.12));
+  background: linear-gradient(180deg, rgba(236, 210, 150, 0.24), rgba(232, 204, 148, 0.14) 60%, rgba(222, 190, 130, 0.2));
 }
 .map-wrap[data-tone='rain'] .season-tint {
-  background: linear-gradient(180deg, rgba(120, 138, 122, 0.22), rgba(128, 146, 130, 0.14) 55%, rgba(104, 122, 108, 0.2));
+  background: linear-gradient(180deg, rgba(120, 138, 122, 0.36), rgba(128, 146, 130, 0.24) 55%, rgba(104, 122, 108, 0.32));
 }
 .map-wrap[data-tone='highland'] .season-tint {
-  background: linear-gradient(180deg, rgba(168, 190, 216, 0.18), rgba(190, 202, 218, 0.1) 55%, rgba(176, 192, 212, 0.14));
+  background: linear-gradient(180deg, rgba(168, 190, 216, 0.3), rgba(190, 202, 218, 0.18) 55%, rgba(176, 192, 212, 0.25));
 }
 
 /* ===== 雪山 / 草地氛围 ===== */
 .fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 940; overflow: hidden; }
 .fx-tint { position: absolute; inset: 0; }
 .fx-cold {
-  background: radial-gradient(ellipse at 50% 0%, rgba(140, 180, 230, 0.16), transparent 65%),
-    linear-gradient(180deg, rgba(160, 200, 240, 0.07), transparent 40%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(140, 180, 230, 0.3), transparent 65%),
+    linear-gradient(180deg, rgba(160, 200, 240, 0.14), transparent 40%);
+  box-shadow: inset 0 0 170px rgba(148, 178, 218, 0.45);
 }
 .fx-grassy {
-  background: radial-gradient(ellipse at 50% 80%, rgba(90, 130, 80, 0.18), transparent 70%),
-    linear-gradient(0deg, rgba(80, 110, 70, 0.1), transparent 45%);
+  background: radial-gradient(ellipse at 50% 80%, rgba(90, 130, 80, 0.32), transparent 70%),
+    linear-gradient(0deg, rgba(80, 110, 70, 0.16), transparent 45%);
+  box-shadow: inset 0 0 170px rgba(96, 118, 96, 0.45);
 }
 .fx-flake {
   position: absolute;
   top: -10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.9), 0 0 11px rgba(226, 238, 255, 0.55);
   animation: flake-fall linear infinite;
 }
 @keyframes flake-fall {
   0% { transform: translate(0, -10px); opacity: 0; }
-  8% { opacity: 0.9; }
-  100% { transform: translate(var(--drift, 0px), 104vh); opacity: 0.15; }
+  8% { opacity: 1; }
+  100% { transform: translate(var(--drift, 0px), 104vh); opacity: 0.4; }
 }
 .fx-fog {
   position: absolute;
@@ -775,27 +777,26 @@
 .fx-drop {
   position: absolute;
   top: -24px;
-  width: 1.5px;
   border-radius: 2px;
-  background: linear-gradient(180deg, transparent, rgba(200, 216, 232, 0.8));
+  background: linear-gradient(180deg, transparent, rgba(214, 230, 244, 0.98));
   animation: drop-fall linear infinite;
 }
 @keyframes drop-fall {
   0% { transform: translate(0, -24px) rotate(10deg); opacity: 0; }
   10% { opacity: 1; }
-  100% { transform: translate(var(--drift, -16px), 106vh) rotate(10deg); opacity: 0.2; }
+  100% { transform: translate(var(--drift, -16px), 106vh) rotate(10deg); opacity: 0.35; }
 }
 .fx-gust {
   position: absolute;
   left: 0;
-  height: 1.5px;
+  height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, transparent, rgba(240, 244, 250, 0.68), transparent);
+  background: linear-gradient(90deg, transparent, rgba(244, 247, 252, 0.92), transparent);
   animation: gust-swipe linear infinite;
 }
 @keyframes gust-swipe {
   0% { transform: translateX(-15vw) translateY(0); opacity: 0; }
-  12% { opacity: 0.9; }
+  12% { opacity: 1; }
   100% { transform: translateX(105vw) translateY(26px); opacity: 0; }
 }
 /* 三维视图内：粒子盖地形、不盖面板（工具/小地图/讲解卡 z 2—3） */

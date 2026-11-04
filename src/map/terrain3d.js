@@ -38,12 +38,12 @@ const followZoomFor = (speed) => TERRAIN_FOLLOW.ZOOMS[speed] || TERRAIN_FOLLOW.Z
  * 与画布 sepia 滤镜（styles/map.css .terrain3d-map）叠加后保持羊皮纸基调。
  */
 const TERRAIN3D_TONES = {
-  autumn: { sky: '#7f98b4', horizon: '#ecdcba', fog: '#d8c6a0', fogBlend: 0.22, saturation: -0.06, contrast: 0 },
-  winter: { sky: '#8ba0b8', horizon: '#e6e4dc', fog: '#cdd0cb', fogBlend: 0.28, saturation: -0.34, contrast: -0.02 },
-  spring: { sky: '#86a4bb', horizon: '#eee0bc', fog: '#dcc9a2', fogBlend: 0.2, saturation: 0.04, contrast: 0.01 },
-  summer: { sky: '#7c9cbe', horizon: '#f0dcae', fog: '#dcc49a', fogBlend: 0.2, saturation: 0.12, contrast: 0.02 },
-  rain: { sky: '#6c7a86', horizon: '#b9b4a2', fog: '#a49e8c', fogBlend: 0.45, saturation: -0.4, contrast: 0.06 },
-  highland: { sky: '#7590b2', horizon: '#e9e2cc', fog: '#d3ccb8', fogBlend: 0.26, saturation: -0.15, contrast: 0.03 },
+  autumn: { sky: '#7f98b4', horizon: '#ecdcba', fog: '#d8c6a0', fogBlend: 0.22, saturation: -0.1, contrast: 0.02 },
+  winter: { sky: '#8ba0b8', horizon: '#e6e4dc', fog: '#cdd0cb', fogBlend: 0.34, saturation: -0.5, contrast: 0.03 },
+  spring: { sky: '#86a4bb', horizon: '#eee0bc', fog: '#dcc9a2', fogBlend: 0.2, saturation: 0.1, contrast: 0.03 },
+  summer: { sky: '#7c9cbe', horizon: '#f0dcae', fog: '#dcc49a', fogBlend: 0.2, saturation: 0.18, contrast: 0.05 },
+  rain: { sky: '#5c6a76', horizon: '#aaa48f', fog: '#938c79', fogBlend: 0.6, saturation: -0.55, contrast: 0.1 },
+  highland: { sky: '#708cae', horizon: '#e9e2cc', fog: '#d3ccb8', fogBlend: 0.3, saturation: -0.32, contrast: 0.06 },
 }
 
 function skySpec(tone) {

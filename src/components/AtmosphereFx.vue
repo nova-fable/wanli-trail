@@ -12,26 +12,27 @@ const { weatherNode } = useWeather()
 const fx = computed(() => (weatherNode.value ? FX_BY_KIND[weatherNode.value.kind] : null))
 
 // 粒子种子创建时定型，动画全走 CSS keyframes（无逐帧 JS；遮挡环境不依赖 rAF）
-const flakes = Array.from({ length: 36 }, (_, i) => ({
+const flakes = Array.from({ length: 64 }, (_, i) => ({
   left: (i * 53) % 100,
   delay: ((i * 0.37) % 3).toFixed(2),
   dur: 4 + (i % 5),
-  size: 3 + (i % 3),
+  size: 3 + (i % 5),
   drift: ((i * 17) % 40) - 20,
 }))
 
-const drops = Array.from({ length: 84 }, (_, i) => ({
+const drops = Array.from({ length: 110 }, (_, i) => ({
   left: (i * 37) % 100,
   delay: ((i * 0.29) % 1.6).toFixed(2),
-  dur: (0.8 + (i % 5) * 0.14).toFixed(2),
-  len: 16 + (i % 4) * 8,
-  drift: -16 - (i % 4) * 8,
-  opacity: (0.35 + (i % 4) * 0.13).toFixed(2),
+  dur: (0.75 + (i % 5) * 0.14).toFixed(2),
+  len: 24 + (i % 4) * 10,
+  width: 1.6 + (i % 3) * 0.3,
+  drift: -18 - (i % 4) * 8,
+  opacity: (0.5 + (i % 4) * 0.14).toFixed(2),
 }))
 
-const gusts = Array.from({ length: 24 }, (_, i) => ({
+const gusts = Array.from({ length: 32 }, (_, i) => ({
   top: 6 + ((i * 61) % 82),
-  width: 110 + (i % 5) * 55,
+  width: 150 + (i % 5) * 75,
   delay: ((i * 0.53) % 3).toFixed(2),
   dur: (2.2 + (i % 4) * 0.8).toFixed(2),
 }))
@@ -71,6 +72,7 @@ const fogs = Array.from({ length: 4 }, (_, i) => ({
           animationDelay: d.delay + 's',
           animationDuration: d.dur + 's',
           height: d.len + 'px',
+          width: d.width + 'px',
           opacity: d.opacity,
           '--drift': d.drift + 'px',
         }"

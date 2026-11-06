@@ -3,6 +3,7 @@
 @import './boot.css';
 @import './base.css';
 @import './map.css';
+@import './panel-woven.css';
 @import './panel-legend.css';
 @import './panel-event.css';
 @import './timeline.css';

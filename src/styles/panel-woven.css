@@ -1,0 +1,180 @@
+/* panel-woven.css · 3D 地形左上角设置面板的织布皮肤
+   移植自 WovenCloth（threeui 注册源：neuform-isolated/sources/lumina-weavers-cloth.html）
+   的织造视觉——象牙织布底、双道绲红绲边、上缘挂杆、低频风摆。
+   纹理本体由 utils/woven-cloth.js 生成（--woven-weave 内联注入），本分片只画边缘与配色。
+
+   本分片在 map.css 之后导入：覆盖 .terrain3d-tools 及其按钮族的暖米色基础样式。 */
+
+.terrain3d {
+  /* 织布皮肤色板：绲边两色取自源码 strokeRect 的 #a5202c / #7c1622 */
+  --woven-hem: #a5202c;
+  --woven-hem-deep: #7c1622;
+  --woven-heading: #6d1620;
+  --woven-ink: #4a3a2c;
+  --woven-muted: #8a7254;
+  --woven-label: #8f6a45;
+  --woven-rule: rgba(124, 22, 34, 0.34);
+  --woven-rule-soft: rgba(121, 96, 58, 0.24);
+  --woven-top: #efe6d4;
+  --woven-bottom: #e3d7bf;
+  --woven-base: #e9dfca;
+}
+
+/* 面板本体：织布纹理平铺 + 悬挂投影。
+   滚动交给内层 .woven-body —— 挂杆与绲边必须贴在布上，不能随内容滚走。 */
+.terrain3d-tools {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 2px 2px 3px 3px;
+  background-color: var(--woven-base);
+  background-image: var(--woven-weave, linear-gradient(180deg, var(--woven-top), var(--woven-bottom)));
+  background-repeat: repeat;
+  background-size: 64px 64px;
+  color: var(--woven-ink);
+  /* 上缘贴住挂杆、下缘投影更重：读作"挂下来的布" */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 244, 0.55),
+    0 10px 22px -10px rgba(52, 26, 20, 0.55),
+    0 2px 6px rgba(52, 26, 20, 0.22);
+  transform-origin: 50% 0%;
+  animation: woven-sway 7.4s ease-in-out infinite;
+}
+/* 双道绲边：对应源码 10px #a5202c 外框 + 3px #7c1622 内框。
+   绲边落在内层内容之外（body 的 padding 留出 14px），不压标题首行。 */
+.terrain3d-tools::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: 3;
+  border: 2px solid var(--woven-hem);
+  pointer-events: none;
+}
+.terrain3d-tools::after {
+  content: '';
+  position: absolute;
+  inset: 11px;
+  z-index: 3;
+  border: 1px solid var(--woven-hem-deep);
+  pointer-events: none;
+}
+
+/* 滚动区：内容在绲边之内滚动；顶部留出挂杆高度 */
+.woven-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px 20px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 22, 34, 0.45) transparent;
+}
+.woven-body::-webkit-scrollbar { width: 8px; }
+.woven-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: rgba(124, 22, 34, 0.42);
+  background-clip: content-box;
+}
+
+/* 挂杆：压住布顶的深木横杆（不越出布宽） */
+.woven-rail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: 7px;
+  background: linear-gradient(180deg, #3a201c, #6d3a30 55%, #2b1512);
+  box-shadow: 0 2px 5px rgba(40, 20, 16, 0.45);
+  pointer-events: none;
+}
+
+/* 风摆：源码 Verlet 布料的低频整体摆动，压缩到面板尺度 */
+@keyframes woven-sway {
+  0%, 100% { transform: rotate(0deg) skewX(0deg); }
+  38% { transform: rotate(0.14deg) skewX(-0.18deg); }
+  72% { transform: rotate(-0.1deg) skewX(0.12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terrain3d-tools { animation: none; }
+}
+
+/* 标题区：墨色衬线标题 + 印章式圆角按钮 */
+.terrain3d-head h2 { color: var(--woven-heading); }
+.terrain3d-head p,
+.terrain3d-caption { color: var(--woven-muted); }
+.terrain3d-head-text { min-width: 0; }
+.terrain3d-head-actions { display: flex; flex: 0 0 auto; gap: 6px; }
+.terrain3d-close {
+  border-color: var(--woven-hem-deep);
+  border-radius: 4px;
+  background: rgba(255, 251, 242, 0.5);
+  color: var(--woven-heading);
+}
+.terrain3d-close:hover { background: var(--woven-heading); color: #fff9ec; }
+
+/* 按钮族：纸上墨线，hover/选中填入绲红色 */
+.terrain3d-time button,
+.terrain3d-scenes button,
+.terrain3d-modes button,
+.terrain3d-situation button {
+  border-color: var(--woven-rule);
+  border-radius: 3px;
+  background: rgba(255, 252, 244, 0.46);
+  color: var(--woven-ink);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.terrain3d-time button:hover,
+.terrain3d-scenes button:hover,
+.terrain3d-modes button:hover,
+.terrain3d-situation button:hover {
+  border-color: var(--woven-hem);
+  background: rgba(165, 32, 44, 0.08);
+  color: var(--woven-heading);
+}
+.terrain3d-scenes button.on,
+.terrain3d-modes button.on {
+  border-color: var(--woven-hem);
+  background: rgba(165, 32, 44, 0.12);
+  color: var(--woven-heading);
+  font-weight: 700;
+}
+
+/* 日期行：绲红色衬线数字 + 下方细分割线 */
+.terrain3d-time {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--woven-rule-soft);
+}
+.terrain3d-time strong { color: var(--woven-heading); letter-spacing: 0.6px; }
+
+/* 小节标题：绲红小方点起头 */
+.terrain3d-section { border-top-color: var(--woven-rule-soft); }
+.terrain3d-section h3 { color: var(--woven-label); letter-spacing: 1.6px; }
+.terrain3d-section h3::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: var(--woven-hem);
+}
+
+/* 图层行与兵力数字 */
+.terrain3d-layer { color: var(--woven-ink); }
+.terrain3d-layer:hover span { color: var(--woven-heading); }
+.terrain3d-layer small { color: var(--woven-muted); }
+.terrain3d-strength { border-top-color: var(--woven-rule-soft); }
+.terrain3d-strength-total strong { color: var(--woven-heading); }
+.terrain3d-strength-total small,
+.terrain3d-strength-row { color: var(--woven-muted); }
+
+/* 窄屏的「设置」胶囊按钮同样换成布面 */
+.terrain3d-compact-controls button {
+  border-color: var(--woven-hem-deep);
+  background: linear-gradient(180deg, var(--woven-top), var(--woven-bottom));
+  color: var(--woven-ink);
+}

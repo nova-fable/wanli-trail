@@ -29,6 +29,8 @@
   padding: 0;
   border: 0;
   border-radius: 2px 2px 3px 3px;
+  /* 风摆会让下缘左右甩出 ~6px：左边距留够，避免摆到视口外被裁 */
+  left: 20px;
   background-color: var(--woven-base);
   background-image: var(--woven-weave, linear-gradient(180deg, var(--woven-top), var(--woven-bottom)));
   background-repeat: repeat;
@@ -92,11 +94,16 @@
   pointer-events: none;
 }
 
-/* 风摆：源码 Verlet 布料的低频整体摆动，压缩到面板尺度 */
+/* 风摆：源码 Verlet 布料的低频摆动，压缩到面板尺度。
+   幅度按 382×624 面板验算，低于 ~0.3deg 时角点位移不足 2px、肉眼不可见。
+   skew 与 rotate 反向叠加会互相抵消，故 skew 只保留权重的四分之一，
+   让下缘以横移为主、同时带一点下垂。周期 7.4s，相位不对称避免节拍感。 */
 @keyframes woven-sway {
   0%, 100% { transform: rotate(0deg) skewX(0deg); }
-  38% { transform: rotate(0.14deg) skewX(-0.18deg); }
-  72% { transform: rotate(-0.1deg) skewX(0.12deg); }
+  22% { transform: rotate(0.95deg) skewX(-0.3deg); }
+  46% { transform: rotate(0.26deg) skewX(-0.08deg); }
+  68% { transform: rotate(-0.82deg) skewX(0.26deg); }
+  86% { transform: rotate(-0.22deg) skewX(0.07deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .terrain3d-tools { animation: none; }

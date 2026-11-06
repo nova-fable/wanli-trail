@@ -9,7 +9,7 @@ import { MARKER_MODE } from '../core/enums'
 import { useI18n } from '../core/i18n'
 import { useWeather } from '../composables/useWeather'
 import { parseDate, formatCnDate } from '../utils/geo'
-import { wovenTextureUrl } from '../utils/woven-cloth'
+import WovenCloth from '../effects/woven-cloth/WovenCloth.vue'
 import { createTerrain3D, TERRAIN3D_SCENES } from '../map/terrain3d'
 import ArmyInsetMap from './ArmyInsetMap.vue'
 import AtmosphereFx from './AtmosphereFx.vue'
@@ -38,8 +38,6 @@ const strengthTotal = computed(() => {
 const basemapAttribution = computed(
   () => BASEMAPS.find((item) => item.key === playback.basemap)?.attribution || BASEMAPS[0].attribution,
 )
-// 织布底纹只生成一次（canvas 逐像素噪点 + toDataURL，不能进 computed 热路径）
-const wovenWeave = wovenTextureUrl()
 
 let terrainMap = null
 let disposed = false
@@ -171,8 +169,8 @@ onBeforeUnmount(() => {
       <button @click="toolsOpen = true">{{ t('terrain3d.settings') }}</button>
       <button :aria-label="t('close')" @click="emit('close')">×</button>
     </div>
-    <div v-show="toolsOpen" class="terrain3d-tools" :style="{ '--woven-weave': wovenWeave }">
-      <span class="woven-rail" aria-hidden="true"></span>
+    <div v-show="toolsOpen" class="terrain3d-tools">
+      <WovenCloth />
       <div class="woven-body">
         <div class="terrain3d-head">
           <div class="terrain3d-head-text">

@@ -1,0 +1,156 @@
+/* panel-woven.css · 3D 地形设置面板的织布底板宿主 + 可读性层
+   布料本身（纹理、绲边、飘动）由 effects/woven-cloth/WovenCloth.vue 的 three.js 场景实时渲染，
+   本分片不画任何布面纹样，只负责：给画布一个裁切容器、让压在布上的文字保持可读。 */
+
+.terrain3d {
+  --woven-hem: #a5202c;
+  --woven-hem-deep: #7c1622;
+  --woven-heading: #6d1620;
+  --woven-ink: #4a3a2c;
+  --woven-muted: #7d6547;
+  --woven-label: #8f6a45;
+  --woven-rule: rgba(124, 22, 34, 0.3);
+  --woven-rule-soft: rgba(121, 96, 58, 0.22);
+}
+
+/* 面板外壳：不可滚动，承载布面与固定绲边 */
+.terrain3d-tools {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: #e9dfca;
+  color: var(--woven-ink);
+  box-shadow:
+    0 10px 22px -10px rgba(52, 26, 20, 0.55),
+    0 2px 6px rgba(52, 26, 20, 0.22);
+}
+
+/* 布料画布：铺满面板，裁掉溢出，置于内容之下 */
+.terrain3d-tools > .woven-cloth {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.woven-cloth-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 可读性层：3D 光照会让布面压暗、发褐，单靠布面本色不足以承托正文。
+   这里叠一层与布同族的象牙洗白（不再是冷白，避免把布洗灰），
+   并在底部略微加深，托住滚动区末端的按钮。 */
+.terrain3d-tools > .woven-cloth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 242, 0.2), rgba(255, 249, 238, 0.12) 55%, rgba(250, 241, 225, 0.3)),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 252, 246, 0.3), rgba(255, 250, 240, 0.1) 65%);
+  pointer-events: none;
+}
+
+/* 滚动区：内容在绲边之内滚动，绲边与布面不参与滚动 */
+.woven-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 18px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 22, 34, 0.4) transparent;
+}
+.woven-body::-webkit-scrollbar { width: 8px; }
+.woven-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: rgba(124, 22, 34, 0.38);
+  background-clip: content-box;
+}
+
+.terrain3d-head h2 {
+  color: var(--woven-heading);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.terrain3d-head p,
+.terrain3d-caption { color: var(--woven-muted); }
+.terrain3d-head-text { min-width: 0; }
+.terrain3d-head-actions { display: flex; flex: 0 0 auto; gap: 6px; }
+.terrain3d-close {
+  border-color: var(--woven-hem-deep);
+  border-radius: 4px;
+  background: rgba(255, 251, 242, 0.62);
+  color: var(--woven-heading);
+}
+.terrain3d-close:hover { background: var(--woven-heading); color: #fff9ec; }
+
+/* 按钮族：布面上的绢面小印，底色须比布更实才立得住 */
+.terrain3d-time button,
+.terrain3d-scenes button,
+.terrain3d-modes button,
+.terrain3d-situation button {
+  border-color: var(--woven-rule);
+  border-radius: 3px;
+  background: rgba(255, 252, 245, 0.66);
+  color: var(--woven-ink);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.terrain3d-time button:hover,
+.terrain3d-scenes button:hover,
+.terrain3d-modes button:hover,
+.terrain3d-situation button:hover {
+  border-color: var(--woven-hem);
+  background: rgba(165, 32, 44, 0.1);
+  color: var(--woven-heading);
+}
+.terrain3d-scenes button.on,
+.terrain3d-modes button.on {
+  border-color: var(--woven-hem);
+  background: rgba(165, 32, 44, 0.14);
+  color: var(--woven-heading);
+  font-weight: 700;
+}
+
+.terrain3d-time {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--woven-rule-soft);
+}
+.terrain3d-time strong {
+  color: var(--woven-heading);
+  letter-spacing: 0.6px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.terrain3d-section { border-top-color: var(--woven-rule-soft); }
+.terrain3d-section h3 { color: var(--woven-label); letter-spacing: 1.6px; }
+.terrain3d-section h3::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: var(--woven-hem);
+}
+
+.terrain3d-layer { color: var(--woven-ink); }
+.terrain3d-layer:hover span { color: var(--woven-heading); }
+.terrain3d-layer small { color: var(--woven-muted); }
+.terrain3d-strength { border-top-color: var(--woven-rule-soft); }
+.terrain3d-strength-total strong { color: var(--woven-heading); }
+.terrain3d-strength-total small,
+.terrain3d-strength-row { color: var(--woven-muted); }
+
+.terrain3d-compact-controls button {
+  border-color: var(--woven-hem-deep);
+  background: linear-gradient(180deg, #efe6d4, #e3d7bf);
+  color: var(--woven-ink);
+}

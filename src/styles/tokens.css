@@ -18,6 +18,8 @@
   --radius-panel: 12px;
   --radius-ctrl: 10px;
   --shadow-panel: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --event-marker-paper: #fff7e5;
+  --event-marker-ink: #442f23;
   --serif: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', serif;
   --sans: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
 }
@@ -43,4 +45,3 @@ button {
   border: none;
   cursor: pointer;
 }
-

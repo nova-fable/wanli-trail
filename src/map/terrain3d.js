@@ -25,6 +25,7 @@ import { MARKER_MODE } from '../core/enums'
 import { DAY_MS, endOfDay, parseDate, positionAt } from '../utils/geo'
 import { inWindow } from '../utils/date'
 import { walkerMarkup } from './icons'
+import { createWovenBannerLayer } from './wovenBanners'
 import { primaryArmyPosition } from './parallel'
 import { createWalkerMotion, resetWalkerMotion, updateWalkerDirection } from './walkerMotion'
 
@@ -232,7 +233,7 @@ export function createTerrain3D(
   const eventMarkers = []
   const situationMarkers = []
   const armyMarkers = new Map()
-  const wptBanners = []
+  let bannerLayer = null
   const progressIndexes = Object.fromEntries(ARMIES.map((army) => [army.key, -1]))
 
   function closePopup() {
@@ -361,20 +362,6 @@ export function createTerrain3D(
         walker: element.querySelector('.walker'),
         lean: element.querySelector('.w-lean'),
         motion: createWalkerMotion(),
-      })
-      // 途经地名锦旗：有 label 的航点各挂一面，日期到达才上墙（随军浮现）
-      routes[army.key].pts.forEach((pt) => {
-        if (!pt.label) return
-        const el = document.createElement('div')
-        el.style.pointerEvents = 'none'
-        el.innerHTML = `<div class="wpt-banner" style="--ac:${army.color};--fd:-${(pt.label.length * 137) % 900}ms"><i></i>${pt.label}</div>`
-        wptBanners.push({
-          marker: new Marker({ element: el, anchor: 'bottom', offset: [0, -7] }).setLngLat([pt.lng, pt.lat]),
-          el,
-          date: parseDate(pt.date),
-          armyKey: army.key,
-          added: false,
-        })
       })
     })
   }
@@ -571,20 +558,6 @@ export function createTerrain3D(
     }
   }
 
-  /** 地名锦旗显隐：日期到达且所属军可见才上墙；回拨或隐藏军即摘下 */
-  function syncWptBanners(time, visibleArmies) {
-    for (const wp of wptBanners) {
-      const on = wp.date <= time && visibleArmies[wp.armyKey]
-      if (on && !wp.added) {
-        wp.marker.addTo(map)
-        wp.added = true
-      } else if (!on && wp.added) {
-        wp.marker.remove()
-        wp.added = false
-      }
-    }
-  }
-
   function updateProgress(time, state, now) {
     const positions = {}
     const progressFeatures = []
@@ -715,6 +688,29 @@ export function createTerrain3D(
   map.on('load', () => {
     addDataLayers()
     addPointMarkers()
+    // 地名锦旗层：共享 WebGL 画布，每面锦旗是一块钉在航点上的小型 Verlet 布料
+    bannerLayer = createWovenBannerLayer({
+      container: map.getCanvasContainer(),
+      zIndex: 2,
+      project: (lng, lat) => {
+        const p = map.project([lng, lat])
+        return { x: p.x, y: p.y }
+      },
+    })
+    bannerLayer.setItems(
+      ARMIES.flatMap((army) =>
+        routes[army.key].pts
+          .filter((pt) => pt.label)
+          .map((pt, i) => ({
+            key: `${army.key}-${i}-${pt.label}`,
+            lng: pt.lng,
+            lat: pt.lat,
+            text: pt.label,
+            color: army.color,
+            dateMs: parseDate(pt.date).getTime(),
+          })),
+      ),
+    )
     ready = true
     setBasemap(selectedBasemap)
     applySeasonTone()
@@ -728,7 +724,7 @@ export function createTerrain3D(
     if (!state.force && now - lastUpdateAt < 75) return
     lastUpdateAt = now
     syncArmyVisibility(state.armyVisible)
-    syncWptBanners(time, state.armyVisible)
+    bannerLayer?.update(time, state.armyVisible)
     updateSituation(time, state.situationVisible)
     updateEventMarkers(time, state.markerMode, state.panelEvent, state.armyVisible)
     const pausedSeek = !state.playing && !state.panelEvent && Number.isFinite(lastTime) && time !== lastTime
@@ -755,6 +751,8 @@ export function createTerrain3D(
     ready = false
     clearTimeout(followTimer)
     closePopup()
+    bannerLayer?.destroy()
+    bannerLayer = null
     for (const { marker } of eventMarkers) marker.remove()
     for (const { marker } of situationMarkers) marker.remove()
     for (const { marker } of armyMarkers.values()) marker.remove()

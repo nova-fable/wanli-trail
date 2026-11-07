@@ -25,9 +25,10 @@ import { armyVisible, situationVisible } from '../composables/useLayers'
 import { preparedRoutes } from '../composables/useRoutes'
 import { armyStatus, publishArmyDisplay } from '../composables/useArmyStatus'
 import { positionAt, parseDate } from '../utils/geo'
-import { MAP_VIEW, WPT_BANNERS } from '../core/constants/map'
+import { MAP_VIEW } from '../core/constants/map'
 import { MARKER_MODE } from '../core/enums'
 import { walkerIcon, eventIcon } from '../map/icons'
+import { createWovenBannerLayer } from '../map/wovenBanners'
 import { createCamera } from '../map/camera'
 import { createTravelTracker } from '../map/traveled'
 import { syncArrows, clearArrows, arrowStepFor } from '../map/arrows'
@@ -63,6 +64,8 @@ const camera = createCamera({
 
 /** 态势图层集合（onMounted 构建；键 zones/kmt/japan/stories/rivers） */
 let situation = null
+/** 地名锦旗层（onMounted 构建；共享 WebGL 画布渲染全部途经地名旗） */
+let bannerLayer = null
 
 /**
  * 统计时刻 t 已越过的事件数（二分；EVENTS/EVENT_TS 同序）
@@ -141,10 +144,8 @@ function render() {
 
     ly.travel.update(route, pos)
 
-    // 地名锦旗显隐：日期到达且缩放贴近路线才浮现，回拨/拉远自动收起
-    //（部队显隐由 group 整体挂摘接管）
-    const bannersOn = map.getZoom() >= WPT_BANNERS.ZOOM
-    for (const b of ly.banners) b.marker.setOpacity(b.date <= t && bannersOn ? 1 : 0)
+    // 地名锦旗显隐状态（布料渲染由锦旗层内部 rAF 自驱）
+    bannerLayer?.update(playback.time, armyVisible)
 
     // 流动虚线仅在行进中播放：暂停/到达即停，避免 SVG 恒定重栅格化
     const flowing = playback.playing && !pos.done
@@ -219,6 +220,30 @@ onMounted(() => {
   // 战场态势层先于路线加入，使路线绘制在其上
   situation = buildSituationLayers(map)
 
+  // 地名锦旗层：共享 WebGL 画布，每面锦旗是一块钉在航点上的小型 Verlet 布料
+  bannerLayer = createWovenBannerLayer({
+    container: mapEl.value,
+    zIndex: 660,
+    project: (lng, lat) => {
+      const p = map.latLngToContainerPoint([lat, lng])
+      return { x: p.x, y: p.y }
+    },
+  })
+  bannerLayer.setItems(
+    ARMIES.flatMap((army) =>
+      preparedRoutes[army.key].pts
+        .filter((pt) => pt.label)
+        .map((pt, i) => ({
+          key: `${army.key}-${i}-${pt.label}`,
+          lng: pt.lng,
+          lat: pt.lat,
+          text: pt.label,
+          color: army.color,
+          dateMs: parseDate(pt.date),
+        })),
+    ),
+  )
+
   // 四路军的路线图层：ghost 幽灵线（未走）/ casing 白衬底 / traveled 主线 / flow 流动虚线
   for (const army of ARMIES) {
     const route = preparedRoutes[army.key]
@@ -251,27 +276,9 @@ onMounted(() => {
     traveled.addTo(group)
     flow.addTo(group)
     if (startDot) startDot.addTo(group)
-    // 途经地名锦旗：有 label 的航点各挂一面，随日期浮现（织纹 + 绛红绲边 + 微风摆）
-    const banners = []
-    route.pts.forEach((pt) => {
-      if (!pt.label) return
-      const m = L.marker([pt.lat, pt.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: `<div class="wpt-wrap"><div class="wpt-banner" style="--ac:${army.color};--fd:-${(pt.label.length * 137) % 900}ms"><i></i>${pt.label}</div></div>`,
-          iconSize: [0, 0],
-        }),
-        interactive: false,
-        zIndexOffset: 300,
-        keyboard: false,
-        opacity: 0,
-      })
-      m.addTo(group)
-      banners.push({ marker: m, date: parseDate(pt.date) })
-    })
     group.addTo(map)
     layers[army.key] = {
-      group, ghost, casing, traveled, flow, startDot, marker, banners,
+      group, ghost, casing, traveled, flow, startDot, marker,
       travel: createTravelTracker({ casing, traveled, flow }),
       arrows: null, arrowIdx: 1, arrowAcc: 0, arrowPlaced: 0, arrowMaxKm: null, arrowStep: null,
       lastPos: null, dir: 1, lean: 0, flowing: false, emaX: 0, emaY: 0,
@@ -337,6 +344,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  bannerLayer?.destroy()
+  bannerLayer = null
   camera.destroy()
   if (map) map.remove()
   map = null

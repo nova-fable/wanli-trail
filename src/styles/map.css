@@ -516,54 +516,10 @@
   70% { transform: skewY(-13deg) scaleX(0.93); }
 }
 
-/* 途经地名锦旗：象牙织纹面 + 绛红绲边 + 微风摆。
-   外层 wrap 负责悬挂定位（点上方居中），内层 banner 独立摆动，互不抢 transform */
-.wpt-wrap {
-  position: absolute;
-  left: 0;
-  bottom: 5px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.wpt-banner {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border: 1px solid rgba(124, 22, 34, 0.55);
-  border-radius: 2px;
-  background:
-    repeating-linear-gradient(0deg, rgba(60, 30, 20, 0.05) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(255, 250, 235, 0.06) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, #f2e9d8, #e6dbc2);
-  color: #5d1620;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  white-space: nowrap;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-  box-shadow: 0 2px 5px rgba(30, 16, 12, 0.4);
-  transform-origin: 50% 0;
-  animation: wpt-sway 2.6s ease-in-out infinite;
-  animation-delay: var(--fd, 0s);
-}
-.wpt-banner i {
-  width: 5px;
-  height: 5px;
-  flex: 0 0 auto;
-  background: var(--ac, #a5202c);
-  transform: rotate(45deg);
-}
-/* 锦旗约 50×18px：摆幅按「底缘位移 ±2.5px」标定（rotate ±3.4° + 浮沉 1.2px），
-   相位不对称避免节拍感 */
-@keyframes wpt-sway {
-  0%, 100% { transform: rotate(2.6deg) translateY(0px); }
-  35% { transform: rotate(-3.4deg) translateY(-1.2px); }
-  70% { transform: rotate(1.2deg) skewX(-2deg) translateY(0.6px); }
-}
+/* 途经地名锦旗已改为共享 WebGL 织布层（src/map/wovenBanners.js），
+   此处只保留行军旗 flutter；prefers-reduced-motion 下旗面静止 */
 @media (prefers-reduced-motion: reduce) {
-  .walker .w-flag,
-  .wpt-banner { animation: none; }
+  .walker .w-flag { animation: none; }
 }
 
 /* 地图上的事件标记 */

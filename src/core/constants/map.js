@@ -42,5 +42,3 @@ export const ARROWS = {
   DENSE_ZOOM: 7,
 }
 
-/** 途经地名锦旗：低于此缩放（极端拉远）才整体隐藏，默认洲际视野保持可见 */
-export const WPT_BANNERS = { ZOOM: 3.0 }

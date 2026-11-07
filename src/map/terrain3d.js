@@ -691,7 +691,8 @@ export function createTerrain3D(
     // 地名锦旗层：共享 WebGL 画布，每面锦旗是一块钉在航点上的小型 Verlet 布料
     bannerLayer = createWovenBannerLayer({
       container: map.getCanvasContainer(),
-      zIndex: 2,
+      sizeEl: map.getContainer(),
+      zIndex: 0,
       project: (lng, lat) => {
         const p = map.project([lng, lat])
         return { x: p.x, y: p.y }
@@ -707,7 +708,7 @@ export function createTerrain3D(
             lat: pt.lat,
             text: pt.label,
             color: army.color,
-            dateMs: parseDate(pt.date).getTime(),
+            dateMs: parseDate(pt.date),
           })),
       ),
     )

@@ -499,17 +499,18 @@
 .walker.done .w-flag { fill: #9aa3b0; }
 .terrain3d-army-marker .w-badge { order: -1; margin: 0 0 1px; }
 
-/* 行军旗布面 flutter：旗面以旗杆为轴扑动。旗面仅 9×6px，摆幅按「旗尖位移
+/* 行军旗布面 flutter（仅 3D 视图：terrain3d 的军标记才有 .terrain3d-army-marker
+   包裹，2D 沙盘保持原样）：旗面以旗杆为轴扑动。旗面仅 9×6px，摆幅按「旗尖位移
    ±3px」标定（skewY ±19° ≈ 旗尖竖向 3px、scaleX 0.78 ≈ 展开 2px），再小肉眼
    不可见；风不断旗不停，到达后旗面落定。
    transform-box: fill-box 让 origin 以旗面自身包围盒计（0% 50% = 旗杆侧） */
-.walker .w-flag {
+.terrain3d-army-marker .walker .w-flag {
   transform-box: fill-box;
   transform-origin: 0% 50%;
   animation: flag-flutter 0.95s ease-in-out infinite;
   animation-delay: var(--fd, 0s);
 }
-.walker.done .w-flag { animation: none; }
+.terrain3d-army-marker .walker.done .w-flag { animation: none; }
 @keyframes flag-flutter {
   0%, 100% { transform: skewY(4deg) scaleX(1); }
   35% { transform: skewY(19deg) scaleX(0.78); }

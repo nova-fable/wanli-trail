@@ -47,12 +47,12 @@ function makeBannerTexture(text, color) {
   g.addColorStop(1, '#e0d4bc')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, W, H)
-  ctx.strokeStyle = 'rgba(165, 32, 44, 0.9)'
-  ctx.lineWidth = 7
+  ctx.strokeStyle = 'rgba(165, 32, 44, 0.85)'
+  ctx.lineWidth = 5
   ctx.strokeRect(8, 8, W - 16, H - 16)
-  ctx.strokeStyle = 'rgba(124, 22, 34, 0.8)'
-  ctx.lineWidth = 2.5
-  ctx.strokeRect(18, 18, W - 36, H - 36)
+  ctx.strokeStyle = 'rgba(124, 22, 34, 0.7)'
+  ctx.lineWidth = 1.5
+  ctx.strokeRect(16, 16, W - 32, H - 32)
   ctx.lineWidth = 1
   for (let y = 0; y < H; y += 3) {
     ctx.strokeStyle = 'rgba(60, 30, 20, 0.05)'
@@ -74,16 +74,16 @@ function makeBannerTexture(text, color) {
   ctx.fillStyle = color
   ctx.fillRect(-9, -9, 18, 18)
   ctx.restore()
-  ctx.fillStyle = '#6d1620'
+  ctx.fillStyle = '#7c1a26'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
-  let fs = 42
+  let fs = 40
   ctx.font = `700 ${fs}px Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif`
-  while (fs > 22 && ctx.measureText(text).width > W - 104) {
+  while (fs > 22 && ctx.measureText(text).width > W - 100) {
     fs -= 2
     ctx.font = `700 ${fs}px Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif`
   }
-  ctx.fillText(text, 72, H / 2 + 2)
+  ctx.fillText(text, 70, H / 2 + 2)
   const img = ctx.getImageData(0, 0, W, H)
   const d = img.data
   for (let i = 0; i < d.length; i += 4) {
@@ -102,13 +102,18 @@ function makeBannerTexture(text, color) {
 /**
  * 创建地名锦旗层
  * @param {object} opts
- * @param {HTMLElement} opts.container 地图容器（画布绝对定位铺满其上）
+ * @param {HTMLElement} opts.container 画布挂载元素（画布绝对定位铺满其上）
+ * @param {HTMLElement} [opts.sizeEl] 尺寸参考元素（默认 container；maplibre 的
+ *   canvas-container 高度为 0，须传真实的外层地图容器）
  * @param {Function} opts.project (lng, lat) => { x, y } 容器像素投影
  * @param {number} [opts.zIndex] 画布 z-index
  */
-export function createWovenBannerLayer({ container, project, zIndex = 660 }) {
-  let width = Math.max(1, container.clientWidth)
-  let height = Math.max(1, container.clientHeight)
+export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 660 }) {
+  const sizeOf = () => {
+    const el = sizeEl || container
+    return { w: Math.max(1, el.clientWidth), h: Math.max(1, el.clientHeight) }
+  }
+  let { w: width, h: height } = sizeOf()
   let disposed = false
 
   let renderer
@@ -124,9 +129,11 @@ export function createWovenBannerLayer({ container, project, zIndex = 660 }) {
   renderer.setClearColor(0x000000, 0)
   const canvas = renderer.domElement
   canvas.style.position = 'absolute'
-  canvas.style.inset = '0'
-  canvas.style.width = '100%'
-  canvas.style.height = '100%'
+  canvas.style.left = '0'
+  canvas.style.top = '0'
+  // 显式像素尺寸：挂载元素的 100% 在零高度容器（如 maplibre canvas-container）里会归零
+  canvas.style.width = width + 'px'
+  canvas.style.height = height + 'px'
   canvas.style.pointerEvents = 'none'
   canvas.style.zIndex = String(zIndex)
   container.appendChild(canvas)
@@ -136,8 +143,10 @@ export function createWovenBannerLayer({ container, project, zIndex = 660 }) {
   const camera = new THREE.OrthographicCamera(0, width, 0, height, -200, 200)
   camera.updateProjectionMatrix()
 
-  scene.add(new THREE.AmbientLight(0xffe9d0, 0.85))
-  const key = new THREE.DirectionalLight(0xfff0dc, 0.9)
+  // 光照以环境光为主：64px 的小旗面稍有倾斜就整体背光发暗，方向光只保留少量
+  // 明暗起伏供褶皱读感
+  scene.add(new THREE.AmbientLight(0xffe9d0, 1.05))
+  const key = new THREE.DirectionalLight(0xfff0dc, 0.55)
   key.position.set(0.4, -0.7, 1)
   scene.add(key)
 
@@ -316,15 +325,18 @@ export function createWovenBannerLayer({ container, project, zIndex = 660 }) {
   }
 
   const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
-    width = Math.max(1, container.clientWidth)
-    height = Math.max(1, container.clientHeight)
+    const s = sizeOf()
+    width = s.w
+    height = s.h
     renderer.setSize(width, height, false)
+    canvas.style.width = width + 'px'
+    canvas.style.height = height + 'px'
     camera.right = width
     camera.bottom = height
     camera.updateProjectionMatrix()
     if (reduceMotion()) renderOnce()
   }) : null
-  observer?.observe(container)
+  observer?.observe(sizeEl || container)
 
   /** 静帧模式：一口气推进到稳态后渲染一次（布料落定成形） */
   function renderOnce() {

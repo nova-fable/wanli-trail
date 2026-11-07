@@ -9,7 +9,6 @@ import { MARKER_MODE } from '../core/enums'
 import { useI18n } from '../core/i18n'
 import { useWeather } from '../composables/useWeather'
 import { parseDate, formatCnDate } from '../utils/geo'
-import WovenCloth from '../effects/woven-cloth/WovenCloth.vue'
 import { createTerrain3D, TERRAIN3D_SCENES } from '../map/terrain3d'
 import ArmyInsetMap from './ArmyInsetMap.vue'
 import AtmosphereFx from './AtmosphereFx.vue'
@@ -170,95 +169,92 @@ onBeforeUnmount(() => {
       <button :aria-label="t('close')" @click="emit('close')">×</button>
     </div>
     <div v-show="toolsOpen" class="terrain3d-tools">
-      <WovenCloth :title="t('terrain3d.title')" />
-      <div class="terrain3d-head-actions">
+      <div class="terrain3d-head">
+        <div>
+          <h2>{{ t('terrain3d.title') }}</h2>
+          <p>{{ t('terrain3d.note') }}</p>
+        </div>
         <button class="terrain3d-close" :aria-label="t('terrain3d.collapse')" @click="toolsOpen = false">−</button>
         <button class="terrain3d-close" :aria-label="t('close')" @click="emit('close')">×</button>
       </div>
-      <div class="woven-titlezone" aria-hidden="true"></div>
-      <div class="woven-body">
-        <div class="terrain3d-head">
-          <p>{{ t('terrain3d.note') }}</p>
-        </div>
 
-        <div class="terrain3d-time">
-          <strong>{{ formatCnDate(playback.time) }}</strong>
-          <button :title="playback.playing ? t('tip.pause') : t('tip.play')" @click="toggle">
-            {{ playback.playing ? '❚❚' : '▶' }}
-          </button>
-        </div>
-
-        <div class="terrain3d-scenes">
-          <button
-            v-for="scene in TERRAIN3D_SCENES"
-            :key="scene.key"
-            :class="{ on: activeScene === scene.key }"
-            @click="selectScene(scene)"
-          >
-            {{ t(`terrain3d.scene.${scene.key}`) }}
-          </button>
-        </div>
-        <p class="terrain3d-caption">
-          {{ activeScene ? t(`terrain3d.caption.${activeScene}`) : t(playback.follow ? 'terrain3d.caption.follow' : 'terrain3d.caption.manual') }}
-        </p>
-
-        <section class="terrain3d-section">
-          <h3>{{ t('terrain3d.routeLayers') }}</h3>
-          <button
-            v-for="army in ARMIES"
-            :key="army.key"
-            class="terrain3d-layer"
-            :class="{ off: !armyVisible[army.key] }"
-            @click="armyVisible[army.key] = !armyVisible[army.key]"
-          >
-            <i :style="{ background: army.color }"></i>
-            <span>{{ army.short }}</span>
-            <small>{{ statusText(army) }}</small>
-          </button>
-          <div class="terrain3d-strength">
-            <div class="terrain3d-strength-total">
-              <strong>{{ strengthTotal }}</strong>
-              <small>{{ t('legend.strengthRange', { from: STRENGTH_TOTAL.start, to: STRENGTH_TOTAL.end }) }}</small>
-            </div>
-            <div v-for="row in strengthRows" :key="row.army.key" class="terrain3d-strength-row">
-              <b :style="{ color: row.army.color }">{{ row.army.short }}</b>
-              <span>{{ row.count == null ? '—' : strengthText(row.count) }}</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="terrain3d-section">
-          <h3>{{ t('legend.display') }}</h3>
-          <div class="terrain3d-modes">
-            <button
-              :class="{ on: playback.markerMode === MARKER_MODE.MARCH }"
-              @click="playback.markerMode = MARKER_MODE.MARCH"
-            >
-              {{ t('legend.mode.march') }}
-            </button>
-            <button
-              :class="{ on: playback.markerMode === MARKER_MODE.ALL }"
-              @click="playback.markerMode = MARKER_MODE.ALL"
-            >
-              {{ t('legend.mode.all') }}
-            </button>
-          </div>
-        </section>
-
-        <section class="terrain3d-section">
-          <h3>{{ t('terrain3d.situationLayers') }}</h3>
-          <div class="terrain3d-situation">
-            <button
-              v-for="layer in ['zones', 'kmt', 'japan', 'stories', 'rivers']"
-              :key="layer"
-              :class="{ off: !situationVisible[layer] }"
-              @click="situationVisible[layer] = !situationVisible[layer]"
-            >
-              {{ t(`legend.item.${layer}.name`) }}
-            </button>
-          </div>
-        </section>
+      <div class="terrain3d-time">
+        <strong>{{ formatCnDate(playback.time) }}</strong>
+        <button :title="playback.playing ? t('tip.pause') : t('tip.play')" @click="toggle">
+          {{ playback.playing ? '❚❚' : '▶' }}
+        </button>
       </div>
+
+      <div class="terrain3d-scenes">
+        <button
+          v-for="scene in TERRAIN3D_SCENES"
+          :key="scene.key"
+          :class="{ on: activeScene === scene.key }"
+          @click="selectScene(scene)"
+        >
+          {{ t(`terrain3d.scene.${scene.key}`) }}
+        </button>
+      </div>
+      <p class="terrain3d-caption">
+        {{ activeScene ? t(`terrain3d.caption.${activeScene}`) : t(playback.follow ? 'terrain3d.caption.follow' : 'terrain3d.caption.manual') }}
+      </p>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('terrain3d.routeLayers') }}</h3>
+        <button
+          v-for="army in ARMIES"
+          :key="army.key"
+          class="terrain3d-layer"
+          :class="{ off: !armyVisible[army.key] }"
+          @click="armyVisible[army.key] = !armyVisible[army.key]"
+        >
+          <i :style="{ background: army.color }"></i>
+          <span>{{ army.short }}</span>
+          <small>{{ statusText(army) }}</small>
+        </button>
+        <div class="terrain3d-strength">
+          <div class="terrain3d-strength-total">
+            <strong>{{ strengthTotal }}</strong>
+            <small>{{ t('legend.strengthRange', { from: STRENGTH_TOTAL.start, to: STRENGTH_TOTAL.end }) }}</small>
+          </div>
+          <div v-for="row in strengthRows" :key="row.army.key" class="terrain3d-strength-row">
+            <b :style="{ color: row.army.color }">{{ row.army.short }}</b>
+            <span>{{ row.count == null ? '—' : strengthText(row.count) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('legend.display') }}</h3>
+        <div class="terrain3d-modes">
+          <button
+            :class="{ on: playback.markerMode === MARKER_MODE.MARCH }"
+            @click="playback.markerMode = MARKER_MODE.MARCH"
+          >
+            {{ t('legend.mode.march') }}
+          </button>
+          <button
+            :class="{ on: playback.markerMode === MARKER_MODE.ALL }"
+            @click="playback.markerMode = MARKER_MODE.ALL"
+          >
+            {{ t('legend.mode.all') }}
+          </button>
+        </div>
+      </section>
+
+      <section class="terrain3d-section">
+        <h3>{{ t('terrain3d.situationLayers') }}</h3>
+        <div class="terrain3d-situation">
+          <button
+            v-for="layer in ['zones', 'kmt', 'japan', 'stories', 'rivers']"
+            :key="layer"
+            :class="{ off: !situationVisible[layer] }"
+            @click="situationVisible[layer] = !situationVisible[layer]"
+          >
+            {{ t(`legend.item.${layer}.name`) }}
+          </button>
+        </div>
+      </section>
     </div>
     <div class="army-insets" :aria-label="t('terrain3d.parallel')">
       <ArmyInsetMap

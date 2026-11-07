@@ -14,10 +14,11 @@ import { EV_SHAPES, WALKER_ICON } from '../core/constants/icons'
 
 /**
  * 行军小红军标记内容，供 2D 和 3D 地图共用。
- * @param {object} army ARMIES 成员（color/short）
+ * --fd 为旗面 flutter 的错峰相位（按部队 key 稳定散列），避免四军旗帜同步摆。
+ * @param {object} army ARMIES 成员（color/short/key）
  */
 export function walkerMarkup(army) {
-  return `<div class="walker" style="--ac:${army.color}">
+  return `<div class="walker" style="--ac:${army.color};--fd:-${(army.key.length * 173) % 900}ms">
       <div class="w-lean"><div class="w-figure">
         <svg viewBox="0 0 34 42" width="34" height="42" aria-hidden="true">
           <ellipse class="w-shadow" cx="14" cy="39" rx="8" ry="2.4"/>

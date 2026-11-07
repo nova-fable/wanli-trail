@@ -232,6 +232,7 @@ export function createTerrain3D(
   const eventMarkers = []
   const situationMarkers = []
   const armyMarkers = new Map()
+  const wptBanners = []
   const progressIndexes = Object.fromEntries(ARMIES.map((army) => [army.key, -1]))
 
   function closePopup() {
@@ -360,6 +361,20 @@ export function createTerrain3D(
         walker: element.querySelector('.walker'),
         lean: element.querySelector('.w-lean'),
         motion: createWalkerMotion(),
+      })
+      // 途经地名锦旗：有 label 的航点各挂一面，日期到达才上墙（随军浮现）
+      routes[army.key].pts.forEach((pt) => {
+        if (!pt.label) return
+        const el = document.createElement('div')
+        el.style.pointerEvents = 'none'
+        el.innerHTML = `<div class="wpt-banner" style="--ac:${army.color};--fd:-${(pt.label.length * 137) % 900}ms"><i></i>${pt.label}</div>`
+        wptBanners.push({
+          marker: new Marker({ element: el, anchor: 'bottom', offset: [0, -7] }).setLngLat([pt.lng, pt.lat]),
+          el,
+          date: parseDate(pt.date),
+          armyKey: army.key,
+          added: false,
+        })
       })
     })
   }
@@ -556,6 +571,20 @@ export function createTerrain3D(
     }
   }
 
+  /** 地名锦旗显隐：日期到达且所属军可见才上墙；回拨或隐藏军即摘下 */
+  function syncWptBanners(time, visibleArmies) {
+    for (const wp of wptBanners) {
+      const on = wp.date <= time && visibleArmies[wp.armyKey]
+      if (on && !wp.added) {
+        wp.marker.addTo(map)
+        wp.added = true
+      } else if (!on && wp.added) {
+        wp.marker.remove()
+        wp.added = false
+      }
+    }
+  }
+
   function updateProgress(time, state, now) {
     const positions = {}
     const progressFeatures = []
@@ -699,6 +728,7 @@ export function createTerrain3D(
     if (!state.force && now - lastUpdateAt < 75) return
     lastUpdateAt = now
     syncArmyVisibility(state.armyVisible)
+    syncWptBanners(time, state.armyVisible)
     updateSituation(time, state.situationVisible)
     updateEventMarkers(time, state.markerMode, state.panelEvent, state.armyVisible)
     const pausedSeek = !state.playing && !state.panelEvent && Number.isFinite(lastTime) && time !== lastTime

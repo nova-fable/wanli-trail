@@ -499,6 +499,69 @@
 .walker.done .w-flag { fill: #9aa3b0; }
 .terrain3d-army-marker .w-badge { order: -1; margin: 0 0 1px; }
 
+/* 行军旗布面 flutter：旗面以旗杆为轴小幅掀动，风不断旗不停；到达后旗面落定。
+   transform-box: fill-box 让 origin 以旗面自身包围盒计（0% 50% = 旗杆侧） */
+.walker .w-flag {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: flag-flutter 1.15s ease-in-out infinite;
+  animation-delay: var(--fd, 0s);
+}
+.walker.done .w-flag { animation: none; }
+@keyframes flag-flutter {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  30% { transform: skewY(9deg) scaleX(0.86); }
+  70% { transform: skewY(-6deg) scaleX(0.94); }
+}
+
+/* 途经地名锦旗：象牙织纹面 + 绛红绲边 + 微风摆。
+   外层 wrap 负责悬挂定位（点上方居中），内层 banner 独立摆动，互不抢 transform */
+.wpt-wrap {
+  position: absolute;
+  left: 0;
+  bottom: 5px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.wpt-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid rgba(124, 22, 34, 0.55);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(0deg, rgba(60, 30, 20, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 250, 235, 0.06) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #f2e9d8, #e6dbc2);
+  color: #5d1620;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 2px 5px rgba(30, 16, 12, 0.4);
+  transform-origin: 50% 0;
+  animation: wpt-sway 5.6s ease-in-out infinite;
+  animation-delay: var(--fd, 0s);
+}
+.wpt-banner i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  background: var(--ac, #a5202c);
+  transform: rotate(45deg);
+}
+@keyframes wpt-sway {
+  0%, 100% { transform: rotate(0.5deg); }
+  30% { transform: rotate(-0.6deg) skewX(0.8deg); }
+  65% { transform: rotate(0.2deg) skewX(-0.7deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .walker .w-flag,
+  .wpt-banner { animation: none; }
+}
+
 /* 地图上的事件标记 */
 /* ===== 左上图例 ===== */
 /* 固定宽度 224px：内部文字一律截断/换行，任何内容都不允许撑开卡片 */

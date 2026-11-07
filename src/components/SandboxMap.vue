@@ -25,7 +25,7 @@ import { armyVisible, situationVisible } from '../composables/useLayers'
 import { preparedRoutes } from '../composables/useRoutes'
 import { armyStatus, publishArmyDisplay } from '../composables/useArmyStatus'
 import { positionAt, parseDate } from '../utils/geo'
-import { MAP_VIEW } from '../core/constants/map'
+import { MAP_VIEW, WPT_BANNERS } from '../core/constants/map'
 import { MARKER_MODE } from '../core/enums'
 import { walkerIcon, eventIcon } from '../map/icons'
 import { createCamera } from '../map/camera'
@@ -141,6 +141,11 @@ function render() {
 
     ly.travel.update(route, pos)
 
+    // 地名锦旗显隐：日期到达且缩放贴近路线才浮现，回拨/拉远自动收起
+    //（部队显隐由 group 整体挂摘接管）
+    const bannersOn = map.getZoom() >= WPT_BANNERS.ZOOM
+    for (const b of ly.banners) b.marker.setOpacity(b.date <= t && bannersOn ? 1 : 0)
+
     // 流动虚线仅在行进中播放：暂停/到达即停，避免 SVG 恒定重栅格化
     const flowing = playback.playing && !pos.done
     if (ly.flowing !== flowing) {
@@ -246,9 +251,27 @@ onMounted(() => {
     traveled.addTo(group)
     flow.addTo(group)
     if (startDot) startDot.addTo(group)
+    // 途经地名锦旗：有 label 的航点各挂一面，随日期浮现（织纹 + 绛红绲边 + 微风摆）
+    const banners = []
+    route.pts.forEach((pt) => {
+      if (!pt.label) return
+      const m = L.marker([pt.lat, pt.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="wpt-wrap"><div class="wpt-banner" style="--ac:${army.color};--fd:-${(pt.label.length * 137) % 900}ms"><i></i>${pt.label}</div></div>`,
+          iconSize: [0, 0],
+        }),
+        interactive: false,
+        zIndexOffset: 300,
+        keyboard: false,
+        opacity: 0,
+      })
+      m.addTo(group)
+      banners.push({ marker: m, date: parseDate(pt.date) })
+    })
     group.addTo(map)
     layers[army.key] = {
-      group, ghost, casing, traveled, flow, startDot, marker,
+      group, ghost, casing, traveled, flow, startDot, marker, banners,
       travel: createTravelTracker({ casing, traveled, flow }),
       arrows: null, arrowIdx: 1, arrowAcc: 0, arrowPlaced: 0, arrowMaxKm: null, arrowStep: null,
       lastPos: null, dir: 1, lean: 0, flowing: false, emaX: 0, emaY: 0,

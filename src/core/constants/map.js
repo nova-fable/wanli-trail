@@ -41,3 +41,6 @@ export const ARROWS = {
   /** 箭头密度切换的缩放档位 */
   DENSE_ZOOM: 7,
 }
+
+/** 途经地名锦旗：低于此缩放（洲际视野）锦旗密度过高成糊，整体隐藏 */
+export const WPT_BANNERS = { ZOOM: 4.4 }

@@ -19,3 +19,14 @@ export const BLOCKADE_COLOR = '#455a64'
  * 用于多路红军主力（army === 'all'）与精神印记等无部队归属的金色图例项。
  */
 export const GOLD_COLOR = '#d4a94e'
+
+export const BANNER_COLORS = Object.freeze({
+  top: '#b84440',
+  middle: '#9b2d34',
+  bottom: '#711f2d',
+  hem: '#e8c58b',
+  text: '#fff2d8',
+  ink: '#411821',
+  pole: '#aa8052',
+  shadow: '#24160f',
+})

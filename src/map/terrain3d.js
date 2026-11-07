@@ -673,6 +673,7 @@ export function createTerrain3D(
   }
 
   map.on('dragstart', () => onUserMove?.())
+  map.on('move', () => bannerLayer?.updateProjection())
   // 缩放跨过 MARKER_DETAIL_ZOOM 只换标记层级、不动时间与图层开关，故单独重刷两级缓存
   map.on('zoomend', () => {
     if (!ready || !latestFollowState) return
@@ -704,6 +705,7 @@ export function createTerrain3D(
           .filter((pt) => pt.label)
           .map((pt, i) => ({
             key: `${army.key}-${i}-${pt.label}`,
+            armyKey: army.key,
             lng: pt.lng,
             lat: pt.lat,
             text: pt.label,

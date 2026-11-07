@@ -66,9 +66,65 @@ let simTime = 0
 let running = false
 let lastW = 0
 let lastH = 0
+let clothW = 4.4
+let clothH = 2.75
+let visW = 0
+let visH = 0
 
 const reduceMotion = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/**
+ * 控件漂动层：把面板内容块逐个绑到所在位置的布面位移上。
+ * DOM 无法像 WebGL 顶点一样逐字弯曲（那是把整个 UI 画进纹理才能做到的），
+ * 真控件上「整块面板都是布」的上限，就是让每块内容随布面漂动；
+ * 位移按控件中心对布面网格做双线性采样，缩放至 SWAY_GAIN 并限幅。
+ */
+const SWAY_GAIN = 0.55
+const SWAY_MAX = 12
+let swayEls = []
+
+function bindSwayEls() {
+  const panel = hostEl.value?.parentElement
+  swayEls = panel ? Array.from(panel.querySelectorAll('.terrain3d-head-actions, .woven-body > *')) : []
+}
+
+function swayStep() {
+  const host = hostEl.value
+  const panel = host?.parentElement
+  if (!panel || !swayEls.length || reduceMotion()) return
+  const pr = panel.getBoundingClientRect()
+  if (pr.width < 2 || pr.height < 2) return
+  const pxPerWorld = pr.height / visH
+  const transforms = []
+  for (const el of swayEls) {
+    const r = el.getBoundingClientRect()
+    if (r.width < 1 || !cur) { transforms.push(null); continue }
+    const u = (r.left + r.width / 2 - pr.left) / pr.width
+    const v = (r.top + r.height / 2 - pr.top) / pr.height
+    const xw = (u - 0.5) * visW
+    const yw = (0.5 - v) * visH
+    const gx = Math.min(GRID_X, Math.max(0, (xw / clothW + 0.5) * GRID_X))
+    const gy = Math.min(GRID_Y, Math.max(0, (0.5 - yw / clothH) * GRID_Y))
+    const ix0 = Math.min(GRID_X - 1, Math.floor(gx))
+    const iy0 = Math.min(GRID_Y - 1, Math.floor(gy))
+    const tx = gx - ix0
+    const ty = gy - iy0
+    let dx = 0
+    let dy = 0
+    for (const [ox, oy, w] of [[0, 0, (1 - tx) * (1 - ty)], [1, 0, tx * (1 - ty)], [0, 1, (1 - tx) * ty], [1, 1, tx * ty]]) {
+      const n = index(ix0 + ox, iy0 + oy)
+      dx += (cur[n * 3] - rest[n * 3]) * w
+      dy += (cur[n * 3 + 1] - rest[n * 3 + 1]) * w
+    }
+    const sx = Math.max(-SWAY_MAX, Math.min(SWAY_MAX, dx * pxPerWorld * SWAY_GAIN))
+    const sy = Math.max(-SWAY_MAX, Math.min(SWAY_MAX, dy * pxPerWorld * SWAY_GAIN))
+    transforms.push(`translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`)
+  }
+  for (let i = 0; i < swayEls.length; i++) {
+    if (transforms[i]) swayEls[i].style.transform = transforms[i]
+  }
+}
 
 /**
  * 织物纹理：象牙渐变 + 双道绛红绲边 + 印入织物的面板标题 + 经纬织线 + 竹节噪点。
@@ -316,6 +372,10 @@ function build(width, height) {
   restH = BW / GRID_X
   restV = BH / GRID_Y
   floorY = -BH * FLOOR_RATIO
+  clothW = BW
+  clothH = BH
+  visW = 2 * distance * Math.tan((FOV * Math.PI) / 360) * aspect
+  visH = 2 * distance * Math.tan((FOV * Math.PI) / 360)
 
   renderer.setSize(width, height, false)
   camera = new THREE.PerspectiveCamera(FOV, aspect, 0.1, 100)
@@ -338,6 +398,7 @@ function renderFrame() {
   step(simTime)
   commit()
   renderer.render(scene, camera)
+  swayStep()
   raf = requestAnimationFrame(renderFrame)
 }
 
@@ -385,6 +446,7 @@ onMounted(() => {
 
   const rect = host.getBoundingClientRect()
   build(Math.max(1, rect.width), Math.max(1, rect.height))
+  bindSwayEls()
 
   if (reduceMotion()) {
     // 静止帧：多迭代到稳态后只渲染一次
@@ -439,6 +501,7 @@ watch(
 onBeforeUnmount(() => {
   disposed = true
   stop()
+  swayEls = []
   document.removeEventListener('visibilitychange', onVisibility)
   resizeObserver?.disconnect()
   resizeObserver = null

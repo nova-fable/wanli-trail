@@ -246,7 +246,7 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
 
   /** 风：稳态风把旗面吹向右 + 行波涟漪（自由端摆幅最大），常数按像素尺度标定 */
   function step(b) {
-    const { cur, prev, pinned } = b
+    const { cur, prev, pinned, rest } = b
     for (let iy = 0; iy <= GRID_Y; iy++) {
       for (let ix = 0; ix <= GRID_X; ix++) {
         const i = index(ix, iy)

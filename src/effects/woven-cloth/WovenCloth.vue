@@ -9,8 +9,8 @@
   与原源的差异（按产品要求裁剪，不是近似）：
   - 纹理去掉品牌字标与页面文案（LUMINA / KYOTO / Commission …），只保留织造本体：
     象牙渐变、绲边、经纬织线、竹节噪点。字标是那套示例页面的内容，不属于本应用。
-  - 顶点数与求解迭代沿用源码（40×26 / 3 次），但面料尺寸按面板宽高比自适应，
-    使绲边落在面板边缘而非浮在中间。
+  - 顶点数与求解迭代沿用源码（40×26 / 3 次），但面料相对视口整体外扩（OVERSCAN），
+    绲边按外扩量内移——风摆收拢时布缘不露底色，绲边仍贴面板边缘。
   - 只保留表示层：无 DOM overlay、无 GSAP 入场动画。
   - 粒子/求值全部基于面板自身尺寸；页面隐藏时停帧，恢复时续跑（与源码 visibilitychange 一致）。
 -->
@@ -28,6 +28,12 @@ const DAMPING = 0.985
 const DT = 1 / 60
 /** 相机垂直视场角（与源码一致） */
 const FOV = 42
+/** 布面相对视口的外扩比例：风摆收拢时布缘仍在视口外，不露面板底色 */
+const OVERSCAN = 1.12
+/** 下摆兜底防深度折叠的触发线，随布高走 */
+const FLOOR_RATIO = 0.52
+/** 预热步数：足够下摆垂到稳态，避免首帧像一块刚被拉直的薄板 */
+const PREWARM_STEPS = 120
 
 let renderer = null
 let scene = null
@@ -74,16 +80,22 @@ function makeClothTexture(aspect) {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, W, H)
 
-  // 双道绛红绲边（源码 strokeRect 46/66 的等比内缩）
-  const hem = Math.max(4, Math.round(W * 0.014))
-  const inset = Math.round(W * 0.012)
+  // 双道绛红绲边（源码 strokeRect 46/66 的等比内缩）：
+  // 视口只取布面中央 1/OVERSCAN，绲边按外扩量内移，落在面板边缘而非布缘
+  const visibleW = W / OVERSCAN
+  const margin = (OVERSCAN - 1) / (2 * OVERSCAN)
+  const hem = Math.max(3, Math.round(visibleW * 0.014))
+  const insetX = (margin + 0.012 / OVERSCAN) * W + hem / 2
+  const insetY = (margin + 0.012 / OVERSCAN) * H + hem / 2
   ctx.strokeStyle = '#a5202c'
   ctx.lineWidth = hem
-  ctx.strokeRect(inset + hem / 2, inset + hem / 2, W - (inset + hem / 2) * 2, H - (inset + hem / 2) * 2)
+  ctx.strokeRect(insetX, insetY, W - insetX * 2, H - insetY * 2)
   ctx.lineWidth = Math.max(1, Math.round(hem * 0.3))
   ctx.strokeStyle = '#7c1622'
-  const inner = inset + hem + Math.round(W * 0.004)
-  ctx.strokeRect(inner, inner, W - inner * 2, H - inner * 2)
+  const gap = Math.max(1, Math.round(visibleW * 0.004))
+  const innerX = insetX + hem / 2 + gap
+  const innerY = insetY + hem / 2 + gap
+  ctx.strokeRect(innerX, innerY, W - innerX * 2, H - innerY * 2)
 
   // 经纬织线（源码步长 3px、0.05 暗 / 0.06 亮）
   const weaveStep = Math.max(2, Math.round(W / 200))
@@ -225,14 +237,12 @@ function commit() {
 /** 按面板实测尺寸重建布料与相机，使布面撑满容器且绲边贴边 */
 function build(width, height) {
   const aspect = width / Math.max(height, 1)
-  // 先由「布宽铺满」定距离，再反推该距离下的可见高度，
-  // 让布料至少覆盖整块面板（否则下摆会浮在面板中间露出底色）。
+  // 相机按 OVERSCAN 拉近：视口只取布面中央 1/OVERSCAN，
+  // 布缘留在视口外，风摆收拢时不露面板底色；绲边随外扩内移保持贴边。
   const BW = 4.4
-  const FILL = 1.03
   const fitW = (BW / 2) / Math.tan((FOV * Math.PI) / 360) / aspect
-  const distance = fitW * FILL + 0.1
-  const visibleH = 2 * distance * Math.tan((FOV * Math.PI) / 360)
-  const BH = Math.max(BW / Math.max(aspect, 0.2), visibleH * 1.02)
+  const distance = fitW / OVERSCAN
+  const BH = BW / Math.max(aspect, 0.2)
 
   if (geometry) geometry.dispose()
   if (material) material.dispose()
@@ -272,17 +282,18 @@ function build(width, height) {
 
   restH = BW / GRID_X
   restV = BH / GRID_Y
-  // 兜底线随布高走：布面覆盖整块面板，禁止其在面板中部塌成尖锥
-  floorY = -BH * 0.36
+  // 兜底线必须在视口下缘之外：托高了会把下摆停在面板内部，
+  // 底部永久露出一条不飘动的底色；只在布面深度折叠坠成尖锥时兜底
+  floorY = -BH * FLOOR_RATIO
 
   renderer.setSize(width, height, false)
   camera = new THREE.PerspectiveCamera(FOV, aspect, 0.1, 100)
   camera.position.set(0, 0, distance)
   camera.lookAt(0, 0, 0)
 
-  // 预热到稳态，避免首帧像一块刚被拉直的薄板
-  for (let s = 0; s < 40; s++) step(s * DT)
-  simTime = 40 * DT
+  // 预热到稳态（含下摆垂落），避免首帧像一块刚被拉直的薄板
+  for (let s = 0; s < PREWARM_STEPS; s++) step(s * DT)
+  simTime = PREWARM_STEPS * DT
   commit()
 }
 

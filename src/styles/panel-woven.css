@@ -13,7 +13,9 @@
   --woven-rule-soft: rgba(121, 96, 58, 0.22);
 }
 
-/* 面板外壳：不可滚动，承载布面与固定绲边 */
+/* 面板外壳：不可滚动，承载布面与固定绲边。
+   底色是布面外扩后的露底保险：极端阵风下布缘瞬时收进视口时，
+   露出的须是同族织纹阴影而非平板色块，故比布面本色深一档并带经纬织线。 */
 .terrain3d-tools {
   display: flex;
   flex-direction: column;
@@ -21,7 +23,10 @@
   padding: 0;
   border: 0;
   border-radius: 3px;
-  background: #e9dfca;
+  background:
+    repeating-linear-gradient(0deg, rgba(60, 30, 20, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 250, 235, 0.06) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #e2d6bd, #d7c8a8);
   color: var(--woven-ink);
   box-shadow:
     0 10px 22px -10px rgba(52, 26, 20, 0.55),

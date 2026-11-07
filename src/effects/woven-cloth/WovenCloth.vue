@@ -1,22 +1,29 @@
 <!--
   @file WovenCloth：实时 Verlet 织布模拟（three.js r160）
-  职责：3D 地形设置面板的「织布」底板——象牙织布 + 双道绛红绲边 + 顶部钉住随风飘动。
+  职责：3D 地形设置面板的「织布锦帕」底板——整幅布面连绲边悬浮在深色衬底上：
+  象牙织布 + 双道绛红绲边 + 印入织物的面板标题 + 顶部钉住随风飘动。
 
   移植自 threeui 注册源（SHA-256 9bfd56ef7579） Sleeping：
   src/shaders/neuform-isolated/sources/lumina-weavers-cloth.html 的
   makeClothTexture() 织造算法与 Verlet 布料求解（wind / step / solve / commit）。
 
-  与原源的差异（按产品要求裁剪，不是近似）：
-  - 纹理去掉品牌字标与页面文案（LUMINA / KYOTO / Commission …），只保留织造本体：
-    象牙渐变、绲边、经纬织线、竹节噪点。字标是那套示例页面的内容，不属于本应用。
-  - 顶点数与求解迭代沿用源码（40×26 / 3 次），但面料相对视口整体外扩（OVERSCAN），
-    绲边按外扩量内移——风摆收拢时布缘不露底色，绲边仍贴面板边缘。
+  与原源的差异（按面板用途适配，不是近似）：
+  - 纹理印的是本面板标题（props.title，随 i18n 重建），不是示例页的 LUMINA 字标；
+  - 布料几何随面板实测尺寸（竖幅挂幡），相机沿用源码 fit 公式：整幅布连绲边可见，
+    四周露出面板衬底边距，标题区之上不铺 DOM 正文；
+  - 风场保留源码结构与节律，幅度按面板尺度收至 WIND_SCALE（源码 1.0 是整页演出幅度）；
+  - 下摆兜底 FLOOR_RATIO 降到视口下缘之外，只在布面深度折叠坠成尖锥时生效；
   - 只保留表示层：无 DOM overlay、无 GSAP 入场动画。
   - 粒子/求值全部基于面板自身尺寸；页面隐藏时停帧，恢复时续跑（与源码 visibilitychange 一致）。
 -->
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as THREE from 'three'
+
+const props = defineProps({
+  /** 印入织物的面板标题（i18n 文案；含「·」时首段作大字主题、其余作间隔小字副题） */
+  title: { type: String, default: '' },
+})
 
 const hostEl = ref(null)
 
@@ -28,12 +35,13 @@ const DAMPING = 0.985
 const DT = 1 / 60
 /** 相机垂直视场角（与源码一致） */
 const FOV = 42
-/** 布面相对视口的外扩比例：风摆收拢时布缘仍在视口外，不露面板底色 */
-const OVERSCAN = 1.12
-/** 下摆兜底防深度折叠的触发线，随布高走 */
-const FLOOR_RATIO = 0.52
-/** 预热步数：足够下摆垂到稳态，避免首帧像一块刚被拉直的薄板 */
-const PREWARM_STEPS = 120
+/** 风力缩放：源码 1.0 是整页横幅的演出幅度，面板尺度按稳态验算收至 0.48
+ *  （下摆峰峰约 120px、布面中段约 ±35px、逐帧位移约 4px） */
+const WIND_SCALE = 0.48
+/** 下摆兜底防深度折叠的触发线，随布高走；必须在视口下缘之外，否则会把下摆托停在面板内 */
+const FLOOR_RATIO = 0.68
+/** 预热步数：与源码一致，布从垂落进场、数秒内落成稳态褶皱 */
+const PREWARM_STEPS = 40
 
 let renderer = null
 let scene = null
@@ -55,24 +63,28 @@ let restH = 0
 let restV = 0
 let simTime = 0
 let running = false
+let lastW = 0
+let lastH = 0
 
 const reduceMotion = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /**
- * 织物纹理：只画布面本体（无任何文字）。
- * @param {number} aspect 面板宽高比，用于让绲边落在画布边缘
+ * 织物纹理：象牙渐变 + 双道绛红绲边 + 印入织物的面板标题 + 经纬织线 + 竹节噪点。
+ * 文字画在纹理里随布面一起形变（源码做法：typography printed into the textile）。
+ * @param {string} title 面板标题（i18n）
+ * @param {number} aspect 布面宽高比
  */
-function makeClothTexture(aspect) {
-  const W = 512
-  const H = Math.max(256, Math.round(W / Math.max(aspect, 0.35)))
+function makeClothTexture(title, aspect) {
+  const W = 896
+  const H = Math.max(512, Math.round(W / Math.max(aspect, 0.2)))
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
 
-  // 象牙ground渐变（源码 #efe6d4 → #e9dfca → #e3d7bf）
+  // 象牙底渐变（源码 #efe6d4 → #e9dfca → #e3d7bf）
   const g = ctx.createLinearGradient(0, 0, 0, H)
   g.addColorStop(0, '#efe6d4')
   g.addColorStop(0.5, '#e9dfca')
@@ -80,25 +92,40 @@ function makeClothTexture(aspect) {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, W, H)
 
-  // 双道绛红绲边（源码 strokeRect 46/66 的等比内缩）：
-  // 视口只取布面中央 1/OVERSCAN，绲边按外扩量内移，落在面板边缘而非布缘
-  const visibleW = W / OVERSCAN
-  const margin = (OVERSCAN - 1) / (2 * OVERSCAN)
-  const hem = Math.max(3, Math.round(visibleW * 0.014))
-  const insetX = (margin + 0.012 / OVERSCAN) * W + hem / 2
-  const insetY = (margin + 0.012 / OVERSCAN) * H + hem / 2
+  // 双道绛红绲边（源码 46/66 内缩、10/3 线宽按纹理宽度等比）
+  const outer = Math.round(W * 0.036)
+  const inner = Math.round(W * 0.052)
   ctx.strokeStyle = '#a5202c'
-  ctx.lineWidth = hem
-  ctx.strokeRect(insetX, insetY, W - insetX * 2, H - insetY * 2)
-  ctx.lineWidth = Math.max(1, Math.round(hem * 0.3))
+  ctx.lineWidth = Math.max(4, Math.round(W * 0.008))
+  ctx.strokeRect(outer, outer, W - outer * 2, H - outer * 2)
   ctx.strokeStyle = '#7c1622'
-  const gap = Math.max(1, Math.round(visibleW * 0.004))
-  const innerX = insetX + hem / 2 + gap
-  const innerY = insetY + hem / 2 + gap
-  ctx.strokeRect(innerX, innerY, W - innerX * 2, H - innerY * 2)
+  ctx.lineWidth = Math.max(2, Math.round(W * 0.0023))
+  ctx.strokeRect(inner, inner, W - inner * 2, H - inner * 2)
+
+  // 织入文字：主标题自动缩排至绲边内，副题按源码 KINETIC TEXTILES 版式拉开字距
+  const serif = 'Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif'
+  const segs = title.split('·').map((s) => s.trim()).filter(Boolean)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  if (segs[0]) {
+    let size = Math.round(W * 0.19)
+    ctx.font = `bold ${size}px ${serif}`
+    const maxW = W * 0.8
+    while (size > 24 && ctx.measureText(segs[0]).width > maxW) {
+      size -= 4
+      ctx.font = `bold ${size}px ${serif}`
+    }
+    ctx.fillStyle = '#a5202c'
+    ctx.fillText(segs[0], W / 2, H * 0.165)
+  }
+  if (segs[1]) {
+    ctx.fillStyle = '#7c1622'
+    ctx.font = `600 ${Math.round(W * 0.032)}px "Helvetica Neue", Arial, "PingFang SC", sans-serif`
+    ctx.fillText(segs[1].split('').join(' '), W / 2, H * 0.215)
+  }
 
   // 经纬织线（源码步长 3px、0.05 暗 / 0.06 亮）
-  const weaveStep = Math.max(2, Math.round(W / 200))
+  const weaveStep = Math.max(2, Math.round(W / 300))
   for (let y = 0; y < H; y += weaveStep) {
     ctx.strokeStyle = 'rgba(60,30,20,0.05)'
     ctx.lineWidth = 1
@@ -116,11 +143,11 @@ function makeClothTexture(aspect) {
     ctx.stroke()
   }
 
-  // 织物竹节噪点（源码 ±10；纹理分辨率低于源图，幅度等比收小避免发脏）
+  // 织物竹节噪点（源码 ±10）
   const image = ctx.getImageData(0, 0, W, H)
   const data = image.data
   for (let i = 0; i < data.length; i += 4) {
-    const n = (Math.random() * 2 - 1) * 6
+    const n = (Math.random() * 2 - 1) * 10
     data[i] += n
     data[i + 1] += n
     data[i + 2] += n
@@ -134,27 +161,24 @@ function makeClothTexture(aspect) {
 }
 
 /**
- * 风力场：只承担行波涟漪（布面的非刚性细节）。整幅低频摆动由 .terrain3d-tools 的
- * woven-sway（panel-woven.css）承担——这里不得保留与 cx 无关的横向均匀分量，
- * 否则网格摆动会与面板风摆叠加成二倍摆，绲边脱离面板边缘。
- * 幅度按 380×622 面板验算：下摆散布 ±9px、布面 ±6px、逐帧位移 <0.5px、兜底不触发。
+ * 风力场：与源码同构（顺风传播 + 阵风包络 + 横向摆动），整体幅度乘 WIND_SCALE。
+ * 布料动效全部由本模拟承担，面板壳体不做任何刚性摆动。
  */
-const RIPPLE_SCALE = 0.6
-let floorY = -0.62
+let floorY = -0.68
 
 function wind(ix, iy, t) {
   const cx = ix / GRID_X
   const cy = iy / GRID_Y
+  const travel = t * 1.7 - cy * 4.2
   const gust = 0.6 + 0.42 * Math.sin(t * 0.6) + 0.18 * Math.sin(t * 1.9 + 1.3)
-  const travel = t * 5.2 - cy * 6.0
-  const amp = 2.6 * (0.25 + 0.75 * cy) * RIPPLE_SCALE
-  const fz = (Math.sin(travel + cx * 7.5) + 0.45 * Math.sin(travel * 1.61 + cx * 12.0 + 1.1)) * amp * gust
-  const fx = Math.sin(t * 2.6 + cx * 5.3 + cy * 3.1) * 0.35 * cy * RIPPLE_SCALE * gust
-  const fy = -0.15 * cy
+  const amp = 4.3 * cy * WIND_SCALE
+  const fz = (Math.sin(travel + cx * 3.3) + 0.5 * Math.sin(travel * 1.7 + cx * 6.0)) * amp * gust
+  const fx = Math.sin(t * 0.9 + cy * 2.2) * 0.6 * cy * WIND_SCALE
+  const fy = -0.4 * cy
   return [fx, fy, fz]
 }
 
-/** 下摆兜底：越接近面板底部，越强的回正力把布面拉回平面 */
+/** 下摆兜底：越接近面板底部，越强的回正力把布面拉回平面（仅在深度折叠时触发） */
 function floorForce(iy, y) {
   if (y >= floorY) return 0
   const over = floorY - y
@@ -235,22 +259,22 @@ function commit() {
   geometry.computeVertexNormals()
 }
 
-/** 按面板实测尺寸重建布料与相机，使布面撑满容器且绲边贴边 */
+/** 按面板实测尺寸重建布料与相机；相机 fit 沿用源码公式收紧倍率：
+ *  正文必须始终落在布面上，布缘只留一线衬底呼吸（大幅留边是整页 hero 的布局） */
 function build(width, height) {
   const aspect = width / Math.max(height, 1)
-  // 相机按 OVERSCAN 拉近：视口只取布面中央 1/OVERSCAN，
-  // 布缘留在视口外，风摆收拢时不露面板底色；绲边随外扩内移保持贴边。
   const BW = 4.4
-  const fitW = (BW / 2) / Math.tan((FOV * Math.PI) / 360) / aspect
-  const distance = fitW / OVERSCAN
   const BH = BW / Math.max(aspect, 0.2)
+  const vFit = (BH / 2) / Math.tan((FOV * Math.PI) / 360)
+  const hFit = (BW / 2) / Math.tan((FOV * Math.PI) / 360) / aspect
+  const distance = Math.max(vFit, hFit) * 1.02 + 0.12
 
   if (geometry) geometry.dispose()
   if (material) material.dispose()
   if (texture) texture.dispose()
 
   geometry = new THREE.PlaneGeometry(BW, BH, GRID_X, GRID_Y)
-  texture = makeClothTexture(aspect)
+  texture = makeClothTexture(props.title, aspect)
   if (texture) texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping
   material = new THREE.MeshPhongMaterial({
     map: texture,
@@ -262,7 +286,6 @@ function build(width, height) {
   if (mesh) scene.remove(mesh)
   mesh = new THREE.Mesh(geometry, material)
   scene.add(mesh)
-  // 让布料上缘贴住面板顶部：相机中心对齐布料中心
   mesh.position.y = 0
 
   const pos = geometry.attributes.position
@@ -283,16 +306,17 @@ function build(width, height) {
 
   restH = BW / GRID_X
   restV = BH / GRID_Y
-  // 兜底线必须在视口下缘之外：托高了会把下摆停在面板内部，
-  // 底部永久露出一条不飘动的底色；只在布面深度折叠坠成尖锥时兜底
   floorY = -BH * FLOOR_RATIO
 
   renderer.setSize(width, height, false)
   camera = new THREE.PerspectiveCamera(FOV, aspect, 0.1, 100)
-  camera.position.set(0, 0, distance)
+  camera.position.set(0, 0.05, distance)
   camera.lookAt(0, 0, 0)
 
-  // 预热到稳态（含下摆垂落），避免首帧像一块刚被拉直的薄板
+  lastW = width
+  lastH = height
+
+  // 预热到源码同款步数：布从垂落进场，数秒内落成稳态褶皱
   for (let s = 0; s < PREWARM_STEPS; s++) step(s * DT)
   simTime = PREWARM_STEPS * DT
   commit()
@@ -385,6 +409,16 @@ watch(
   (visible) => {
     if (!visible || reduceMotion()) return
     start()
+  },
+)
+
+// 语言切换：标题变了就重建纹理（布面文字随 i18n 更新）
+watch(
+  () => props.title,
+  () => {
+    if (disposed || !lastW) return
+    build(lastW, lastH)
+    if (!reduceMotion()) start()
   },
 )
 

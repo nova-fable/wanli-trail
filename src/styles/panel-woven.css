@@ -1,7 +1,7 @@
-/* panel-woven.css · 3D 地形设置面板的织布底板宿主 + 可读性层
-   布料本身（纹理、绲边、涟漪）由 effects/woven-cloth/WovenCloth.vue 的 three.js 场景实时渲染，
-   本分片不画任何布面纹样，只负责：给画布一个裁切容器、让压在布上的文字保持可读、
-   驱动整块面板（正文 + 布面画布一体）的 woven-sway 风摆。 */
+/* panel-woven.css · 3D 地形设置面板的织布锦帕外壳
+   布料本身（纹理、绲边、织入标题、飘动）由 effects/woven-cloth/WovenCloth.vue 的
+   three.js 场景实时渲染，本分片不画任何布面纹样，只负责：
+   深绛衬底上悬浮整幅布面（衬底从布缘四周露出）、暗角压边、让压在布上的正文保持可读。 */
 
 .terrain3d {
   --woven-hem: #a5202c;
@@ -14,9 +14,9 @@
   --woven-rule-soft: rgba(121, 96, 58, 0.22);
 }
 
-/* 面板外壳：不可滚动，承载布面与固定绲边。
-   底色是布面外扩后的露底保险：极端阵风下布缘瞬时收进视口时，
-   露出的须是同族织纹阴影而非平板色块，故比布面本色深一档并带经纬织线。 */
+/* 面板外壳：不可滚动。衬底取原版同款深绛 radial——布面按相机 fit 悬浮其中、
+   四周露出衬底边距，整块面板读作装裱在深色卡面上的挂幡。
+   布料动效全部由 WovenCloth 的布料模拟承担，壳体不做任何刚性摆动。 */
 .terrain3d-tools {
   display: flex;
   flex-direction: column;
@@ -24,18 +24,7 @@
   padding: 0;
   border: 0;
   border-radius: 3px;
-  /* 整板风摆：面板作为一块布、上缘钉住随风摆动，正文与布面画布一起动。
-     幅度按 382×624 面板验算：rotate ±0.95° 下缘横移约 12px，低于 0.3° 时角点
-     位移不足 2px、肉眼不可见；skew 只保留旋转权重的四分之一，避免与 rotate
-     反向后相互抵消；周期 7.4s，相位不对称避免节拍感。
-     布面网格只画行波涟漪（WovenCloth 风场无横向均匀分量），不与本摆动叠加。 */
-  transform-origin: 50% 50%;
-  animation: woven-sway 7.4s ease-in-out infinite;
-  will-change: transform;
-  background:
-    repeating-linear-gradient(0deg, rgba(60, 30, 20, 0.05) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(255, 250, 235, 0.06) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, #e2d6bd, #d7c8a8);
+  background: radial-gradient(120% 100% at 50% 30%, #2a1113 0%, #1a0a0c 55%, #0f0607 100%);
   color: var(--woven-ink);
   box-shadow:
     0 10px 22px -10px rgba(52, 26, 20, 0.55),
@@ -57,17 +46,6 @@
   height: 100%;
 }
 
-@keyframes woven-sway {
-  0%, 100% { transform: rotate(0deg) skewX(0deg); }
-  22% { transform: rotate(0.95deg) skewX(-0.3deg); }
-  46% { transform: rotate(0.26deg) skewX(-0.08deg); }
-  68% { transform: rotate(-0.82deg) skewX(0.26deg); }
-  86% { transform: rotate(-0.22deg) skewX(0.07deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .terrain3d-tools { animation: none; }
-}
-
 /* 可读性层：3D 光照会让布面压暗、发褐，单靠布面本色不足以承托正文。
    这里叠一层与布同族的象牙洗白（不再是冷白，避免把布洗灰），
    并在底部略微加深，托住滚动区末端的按钮。 */
@@ -81,7 +59,14 @@
   pointer-events: none;
 }
 
-/* 滚动区：内容在绲边之内滚动，绲边与布面不参与滚动 */
+/* 标题区：织物上部的织入标题让给画布展示，正文从其下缘起滚 */
+.woven-titlezone {
+  flex: 0 0 auto;
+  height: 200px;
+  pointer-events: none;
+}
+
+/* 滚动区：正文压在布面之上滚动，绲边与织入标题不参与滚动 */
 .woven-body {
   position: relative;
   z-index: 1;
@@ -89,7 +74,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 20px 18px 18px;
+  padding: 14px 26px 18px;
   scrollbar-width: thin;
   scrollbar-color: rgba(124, 22, 34, 0.4) transparent;
 }
@@ -101,14 +86,17 @@
   background-clip: content-box;
 }
 
-.terrain3d-head h2 {
-  color: var(--woven-heading);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+/* 面板操作钮：悬浮在衬底上缘（布面上方的边距里），不随正文滚动 */
+.terrain3d-head-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
 }
 .terrain3d-head p,
 .terrain3d-caption { color: var(--woven-muted); }
-.terrain3d-head-text { min-width: 0; }
-.terrain3d-head-actions { display: flex; flex: 0 0 auto; gap: 6px; }
 .terrain3d-close {
   border-color: var(--woven-hem-deep);
   border-radius: 4px;

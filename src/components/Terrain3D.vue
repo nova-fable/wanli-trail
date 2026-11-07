@@ -170,17 +170,15 @@ onBeforeUnmount(() => {
       <button :aria-label="t('close')" @click="emit('close')">×</button>
     </div>
     <div v-show="toolsOpen" class="terrain3d-tools">
-      <WovenCloth />
+      <WovenCloth :title="t('terrain3d.title')" />
+      <div class="terrain3d-head-actions">
+        <button class="terrain3d-close" :aria-label="t('terrain3d.collapse')" @click="toolsOpen = false">−</button>
+        <button class="terrain3d-close" :aria-label="t('close')" @click="emit('close')">×</button>
+      </div>
+      <div class="woven-titlezone" aria-hidden="true"></div>
       <div class="woven-body">
         <div class="terrain3d-head">
-          <div class="terrain3d-head-text">
-            <h2>{{ t('terrain3d.title') }}</h2>
-            <p>{{ t('terrain3d.note') }}</p>
-          </div>
-          <div class="terrain3d-head-actions">
-            <button class="terrain3d-close" :aria-label="t('terrain3d.collapse')" @click="toolsOpen = false">−</button>
-            <button class="terrain3d-close" :aria-label="t('close')" @click="emit('close')">×</button>
-          </div>
+          <p>{{ t('terrain3d.note') }}</p>
         </div>
 
         <div class="terrain3d-time">

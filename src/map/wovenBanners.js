@@ -1,33 +1,34 @@
 /**
  * @file 地名锦旗层：一块共享 WebGL 画布渲染全部途经地名旗（three.js r160）。
  *
- * 每面锦旗是一块小型 Verlet 布料——顶边钉在航点的屏幕投影位置，布料在屏幕
- * 坐标系内求解（正交相机按容器像素取景，y 轴向下），地名印进织纹纹理随风飞。
- * 求解器移植自 threeui 注册源 lumina-weavers-cloth.html 的 Verlet 布料求解
- * （wind / step / solve / commit 与曾用于设置面板的 WovenCloth 同源），
- * 常数按像素尺度重新标定：旗面 64×26px、重力 300px/s²、摆动幅度按「下缘
- * 位移 ±8px」标定。
+ * 每面锦旗 = 一根插在航点上的旗杆 + 一块小型 Verlet 布料：旗面左边缘系在
+ * 杆顶，随风向右展开（布料在屏幕坐标系内求解，正交相机按容器像素取景，
+ * y 轴向下），地名印进织纹纹理。
+ * 布料求解移植自 threeui 注册源 lumina-weavers-cloth.html 的 Verlet 布料求解
+ * （solve / commit 与曾用于设置面板的 WovenCloth 同源），常数按像素尺度
+ * 重新标定：旗面 64×24px、重力 80px/s²、稳态风 260px/s²（旗面近乎水平
+ * 展开、保留少量垂坠），摆动幅度按「自由端位移 ±5px」标定。
  *
- * 结构：createWovenBannerLayer({ container, project, zIndex }) 返回
+ * 结构：createWovenBannerLayer({ container, sizeEl, project, zIndex }) 返回
  * { setItems, update, destroy }：
  * - setItems(items)：items = [{ key, lng, lat, text, color, dateMs }]，全量替换；
  * - update(timeMs, visibleMap)：地图侧每次节流刷新调用，只更新显隐状态；
  *   渲染由内部 rAF 自驱（地图拖拽/飞行时投影自动跟随，不依赖地图侧帧循环）；
- * - 离屏锦旗跳过求解；dateMs 到达时布料从平板坠落入位（与源码开场一致）；
+ * - 离屏锦旗跳过求解；dateMs 到达时旗面从系杆状态飘展开（自然入场）；
  * - prefers-reduced-motion 下无 rAF，静帧渲染（布料预热闹到稳态）。
  */
 
 import * as THREE from 'three'
 
-/** 旗面几何：网格密度在 119 面同屏的求解量与布感之间取平衡 */
+/** 旗面几何：GX 沿展开方向（流向）、GY 沿旗杆（高度方向） */
 const GRID_X = 12
-const GRID_Y = 6
+const GRID_Y = 5
 const BANNER_W = 64
-const BANNER_H = 26
-const GRAVITY = 300
+const BANNER_H = 24
+const POLE_H = 30
+const GRAVITY = 80
 const DAMPING = 0.985
 const DT = 1 / 60
-const PIN_OFFSET_Y = 5
 const CULL_MARGIN = 100
 
 const reduceMotion = () =>
@@ -36,15 +37,15 @@ const reduceMotion = () =>
 /** 织纹纹理：象牙织面 + 双道绛红绲边 + 经纬织线 + 军色菱形标 + 地名（衬线绛字）+ 竹节噪点 */
 function makeBannerTexture(text, color) {
   const W = 288
-  const H = 120
+  const H = 108
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')
   const g = ctx.createLinearGradient(0, 0, 0, H)
-  g.addColorStop(0, '#f1e8d6')
-  g.addColorStop(0.55, '#e9dfca')
-  g.addColorStop(1, '#e0d4bc')
+  g.addColorStop(0, '#f7f0e1')
+  g.addColorStop(0.55, '#efe5d0')
+  g.addColorStop(1, '#e8dcc4')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, W, H)
   ctx.strokeStyle = 'rgba(165, 32, 44, 0.85)'
@@ -55,39 +56,39 @@ function makeBannerTexture(text, color) {
   ctx.strokeRect(16, 16, W - 32, H - 32)
   ctx.lineWidth = 1
   for (let y = 0; y < H; y += 3) {
-    ctx.strokeStyle = 'rgba(60, 30, 20, 0.05)'
+    ctx.strokeStyle = 'rgba(60, 30, 20, 0.045)'
     ctx.beginPath()
     ctx.moveTo(0, y + 0.5)
     ctx.lineTo(W, y + 0.5)
     ctx.stroke()
   }
   for (let x = 0; x < W; x += 3) {
-    ctx.strokeStyle = 'rgba(255, 250, 235, 0.06)'
+    ctx.strokeStyle = 'rgba(255, 250, 235, 0.055)'
     ctx.beginPath()
     ctx.moveTo(x + 0.5, 0)
     ctx.lineTo(x + 0.5, H)
     ctx.stroke()
   }
   ctx.save()
-  ctx.translate(50, H / 2)
+  ctx.translate(48, H / 2)
   ctx.rotate(Math.PI / 4)
   ctx.fillStyle = color
-  ctx.fillRect(-9, -9, 18, 18)
+  ctx.fillRect(-8.5, -8.5, 17, 17)
   ctx.restore()
   ctx.fillStyle = '#7c1a26'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
   let fs = 40
   ctx.font = `700 ${fs}px Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif`
-  while (fs > 22 && ctx.measureText(text).width > W - 100) {
+  while (fs > 22 && ctx.measureText(text).width > W - 96) {
     fs -= 2
     ctx.font = `700 ${fs}px Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif`
   }
-  ctx.fillText(text, 70, H / 2 + 2)
+  ctx.fillText(text, 68, H / 2 + 2)
   const img = ctx.getImageData(0, 0, W, H)
   const d = img.data
   for (let i = 0; i < d.length; i += 4) {
-    const n = (Math.random() * 2 - 1) * 9
+    const n = (Math.random() * 2 - 1) * 8
     d[i] += n
     d[i + 1] += n
     d[i + 2] += n
@@ -150,6 +151,12 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
   key.position.set(0.4, -0.7, 1)
   scene.add(key)
 
+  /** 旗杆与杆头（全军共用几何/材质，实例各自定位） */
+  const poleGeo = new THREE.PlaneGeometry(2, POLE_H + 2)
+  const poleMat = new THREE.MeshBasicMaterial({ color: 0x5d4030 })
+  const knobGeo = new THREE.CircleGeometry(2.4, 12)
+  const knobMat = new THREE.MeshBasicMaterial({ color: 0xa5202c })
+
   const banners = []
   const restW = BANNER_W / GRID_X
   const restH = BANNER_H / GRID_Y
@@ -168,7 +175,7 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
     for (let iy = 0; iy <= GRID_Y; iy++) {
       for (let ix = 0; ix <= GRID_X; ix++) {
         const i = index(ix, iy)
-        rest[i * 3] = (ix / GRID_X) * BANNER_W - BANNER_W / 2
+        rest[i * 3] = (ix / GRID_X) * BANNER_W
         rest[i * 3 + 1] = (iy / GRID_Y) * BANNER_H
       }
     }
@@ -180,12 +187,21 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
       specular: 0x2a1410,
     })
     const mesh = new THREE.Mesh(geometry, material)
+    const pole = new THREE.Mesh(poleGeo, poleMat)
+    const knob = new THREE.Mesh(knobGeo, knobMat)
     mesh.visible = false
+    pole.visible = false
+    knob.visible = false
     mesh.frustumCulled = false
+    pole.frustumCulled = false
+    scene.add(pole)
+    scene.add(knob)
     scene.add(mesh)
     return {
       ...item,
       mesh,
+      pole,
+      knob,
       geometry,
       material,
       rest,
@@ -194,7 +210,6 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
       pinned: new Uint8Array(nodeCount),
       phase: ((item.key.length * 137) % 628) / 100,
       falling: true,
-      added: false,
     }
   }
 
@@ -203,7 +218,8 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
       b.cur[i] = b.rest[i]
       b.prev[i] = b.rest[i]
     }
-    for (let ix = 0; ix <= GRID_X; ix++) b.pinned[ix] = 1
+    // 左边缘（系杆侧）整列钉死
+    for (let iy = 0; iy <= GRID_Y; iy++) b.pinned[index(0, iy)] = 1
   }
 
   function solve(b, a, c, restLength) {
@@ -228,20 +244,20 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
     }
   }
 
-  /** 风场：与源码同构（顺风行波 + 阵风包络），常数按像素尺度标定（下缘位移 ±8px） */
+  /** 风：稳态风把旗面吹向右 + 行波涟漪（自由端摆幅最大），常数按像素尺度标定 */
   function step(b) {
-    const { cur, prev, pinned, rest } = b
+    const { cur, prev, pinned } = b
     for (let iy = 0; iy <= GRID_Y; iy++) {
       for (let ix = 0; ix <= GRID_X; ix++) {
         const i = index(ix, iy)
         if (pinned[i]) continue
         const cx = ix / GRID_X
         const cy = iy / GRID_Y
-        const travel = simT * 3.2 - cy * 2.4 + b.phase
-        const gust = 0.55 + 0.45 * Math.sin(simT * 1.1 + b.phase * 2)
-        const az = (Math.sin(travel + cx * 3.6) + 0.5 * Math.sin(travel * 1.63 + cx * 6.4)) * (30 + 62 * cy) * gust
-        const ax = Math.sin(simT * 1.3 + cy * 2.2 + b.phase) * (12 + 24 * cy) * gust
-        const ay = 16 * cy
+        const travel = simT * 4.2 - cx * 3.0 + b.phase
+        const gust = 0.55 + 0.45 * Math.sin(simT * 1.2 + b.phase * 2)
+        const az = (Math.sin(travel) + 0.5 * Math.sin(travel * 1.7)) * (24 + 62 * cx) * gust
+        const ax = 260 + Math.sin(simT * 1.4 + b.phase) * (18 + 26 * cx) * gust
+        const ay = -16 * cx * gust
         for (let k = 0; k < 3; k++) {
           const j = i * 3 + k
           const a = k === 0 ? ax : k === 1 ? ay + GRAVITY : az
@@ -259,9 +275,9 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
         for (let ix = 0; ix <= GRID_X; ix++) solve(b, index(ix, iy), index(ix, iy + 1), restH)
       }
     }
-    // 顶边钉死在航点（源码同一处理）
-    for (let ix = 0; ix <= GRID_X; ix++) {
-      const i = index(ix, 0)
+    // 左边缘（系杆侧）钉死在杆顶
+    for (let iy = 0; iy <= GRID_Y; iy++) {
+      const i = index(0, iy)
       for (let k = 0; k < 3; k++) {
         cur[i * 3 + k] = rest[i * 3 + k]
         prev[i * 3 + k] = rest[i * 3 + k]
@@ -278,6 +294,13 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
     b.geometry.computeVertexNormals()
   }
 
+  /** 摆放旗杆（杆底插在航点上）与旗面（系杆侧贴杆顶） */
+  function place(b, p) {
+    b.pole.position.set(p.x, p.y - POLE_H / 2 + 1, 0)
+    b.knob.position.set(p.x, p.y - POLE_H, 0)
+    b.mesh.position.set(p.x + 1.2, p.y - POLE_H, 0)
+  }
+
   function frame() {
     if (disposed) return
     raf = requestAnimationFrame(frame)
@@ -286,7 +309,11 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
     for (const b of banners) {
       const on = b.dateMs <= latestTimeMs && latestVisible[b.armyKey] !== false
       if (!on) {
-        if (b.mesh.visible) b.mesh.visible = false
+        if (b.mesh.visible) {
+          b.mesh.visible = false
+          b.pole.visible = false
+          b.knob.visible = false
+        }
         continue
       }
       const p = project(b.lng, b.lat)
@@ -294,15 +321,21 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
         p.x < -CULL_MARGIN || p.x > width + CULL_MARGIN ||
         p.y < -CULL_MARGIN || p.y > height + CULL_MARGIN
       if (offscreen) {
-        if (b.mesh.visible) b.mesh.visible = false
+        if (b.mesh.visible) {
+          b.mesh.visible = false
+          b.pole.visible = false
+          b.knob.visible = false
+        }
         continue
       }
       b.mesh.visible = true
+      b.pole.visible = true
+      b.knob.visible = true
       if (b.falling) {
         resetSim(b)
         b.falling = false
       }
-      b.mesh.position.set(p.x, p.y + PIN_OFFSET_Y, 0)
+      place(b, p)
       step(b)
       commit(b)
     }
@@ -338,7 +371,9 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
   }) : null
   observer?.observe(sizeEl || container)
 
-  /** 静帧模式：一口气推进到稳态后渲染一次（布料落定成形） */
+  document.addEventListener('visibilitychange', onVisibility)
+
+  /** 静帧模式：一口气推进到稳态后渲染一次（旗面飘展开成形） */
   function renderOnce() {
     for (let s = 0; s < 240; s++) {
       simT += DT
@@ -349,15 +384,18 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
           b.falling = false
         }
         const p = project(b.lng, b.lat)
-        b.mesh.position.set(p.x, p.y + PIN_OFFSET_Y, 0)
+        place(b, p)
         step(b)
       }
     }
     for (const b of banners) {
       const p = project(b.lng, b.lat)
-      b.mesh.position.set(p.x, p.y + PIN_OFFSET_Y, 0)
+      place(b, p)
       commit(b)
-      b.mesh.visible = b.dateMs <= latestTimeMs && latestVisible[b.armyKey] !== false
+      const on = b.dateMs <= latestTimeMs && latestVisible[b.armyKey] !== false
+      b.mesh.visible = on
+      b.pole.visible = on
+      b.knob.visible = on
     }
     renderer.render(scene, camera)
   }
@@ -367,6 +405,8 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
     setItems(items) {
       for (const b of banners) {
         scene.remove(b.mesh)
+        scene.remove(b.pole)
+        scene.remove(b.knob)
         b.geometry.dispose()
         b.material.dispose()
         b.material.map.dispose()
@@ -397,13 +437,20 @@ export function createWovenBannerLayer({ container, sizeEl, project, zIndex = 66
       disposed = true
       stop()
       observer?.disconnect()
+      document.removeEventListener('visibilitychange', onVisibility)
       for (const b of banners) {
         scene.remove(b.mesh)
+        scene.remove(b.pole)
+        scene.remove(b.knob)
         b.geometry.dispose()
         b.material.dispose()
         b.material.map.dispose()
       }
       banners.length = 0
+      poleGeo.dispose()
+      poleMat.dispose()
+      knobGeo.dispose()
+      knobMat.dispose()
       renderer.dispose()
       renderer.forceContextLoss?.()
       canvas.remove()

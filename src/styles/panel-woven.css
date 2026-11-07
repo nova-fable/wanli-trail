@@ -46,16 +46,15 @@
   height: 100%;
 }
 
-/* 可读性层：3D 光照会让布面压暗、发褐，单靠布面本色不足以承托正文。
-   这里叠一层与布同族的象牙洗白（不再是冷白，避免把布洗灰），
-   并在底部略微加深，托住滚动区末端的按钮。 */
+/* 可读性层：只做轻度象牙洗白托正文——层要薄，织物纹理与褶皱行波必须透过来，
+   否则内容区会读作一块不动的平板 */
 .terrain3d-tools > .woven-cloth::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(255, 251, 242, 0.2), rgba(255, 249, 238, 0.12) 55%, rgba(250, 241, 225, 0.3)),
-    radial-gradient(120% 80% at 50% 0%, rgba(255, 252, 246, 0.3), rgba(255, 250, 240, 0.1) 65%);
+    linear-gradient(180deg, rgba(255, 251, 242, 0.12), rgba(255, 249, 238, 0.07) 55%, rgba(250, 241, 225, 0.26)),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 252, 246, 0.18), rgba(255, 250, 240, 0.06) 65%);
   pointer-events: none;
 }
 
@@ -105,14 +104,14 @@
 }
 .terrain3d-close:hover { background: var(--woven-heading); color: #fff9ec; }
 
-/* 按钮族：布面上的绢面小印，底色须比布更实才立得住 */
+/* 按钮族：布面上的绢面小印——底色半透，布面褶皱要从按钮里透出来 */
 .terrain3d-time button,
 .terrain3d-scenes button,
 .terrain3d-modes button,
 .terrain3d-situation button {
   border-color: var(--woven-rule);
   border-radius: 3px;
-  background: rgba(255, 252, 245, 0.66);
+  background: rgba(255, 252, 245, 0.5);
   color: var(--woven-ink);
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }

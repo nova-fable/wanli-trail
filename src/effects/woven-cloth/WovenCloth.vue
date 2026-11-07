@@ -35,11 +35,12 @@ const DAMPING = 0.985
 const DT = 1 / 60
 /** 相机垂直视场角（与源码一致） */
 const FOV = 42
-/** 风力缩放：源码 1.0 是整页横幅的演出幅度，面板尺度按稳态验算收至 0.48
- *  （下摆峰峰约 120px、布面中段约 ±35px、逐帧位移约 4px） */
-const WIND_SCALE = 0.48
-/** 下摆兜底防深度折叠的触发线，随布高走；必须在视口下缘之外，否则会把下摆托停在面板内 */
-const FLOOR_RATIO = 0.68
+/** 风力缩放：源码 1.0 是整页横幅的演出幅度，面板尺度按稳态验算收至 0.42；
+ *  布缘另有幡坠弹簧约束（见 step），再大仍会阵风期把下摆扫上正文区 */
+const WIND_SCALE = 0.42
+/** 下摆兜底防深度折叠的触发线，随布高走；在视口下缘之外一小段，
+ *  深度折叠坠出面板前接住，又不至于把下摆托停在面板内 */
+const FLOOR_RATIO = 0.6
 /** 预热步数：与源码一致，布从垂落进场、数秒内落成稳态褶皱 */
 const PREWARM_STEPS = 40
 
@@ -221,9 +222,17 @@ function step(t) {
       if (pinned[i]) continue
       const [fx, fy, fz] = wind(ix, iy, t)
       const lift = floorForce(iy, cur[i * 3 + 1])
+      // 幡坠：锦幡下缘的坠重 + 两侧绲边的坠绳——下缘与左右边受回位弹簧，
+      // 把布缘被风掀起/内收的幅度压到 ±20px 级，避免正文压到露出的深色衬底上；
+      // 布心中段的大褶皱不受影响
+      const cx = ix / GRID_X
+      const cy = iy / GRID_Y
+      const hemY = cy > 0.72 ? (rest[i * 3 + 1] - cur[i * 3 + 1]) * 10 * ((cy - 0.72) / 0.28) : 0
+      const edgeX = cx < 0.12 ? (0.12 - cx) / 0.12 : cx > 0.88 ? (cx - 0.88) / 0.12 : 0
+      const hemX = edgeX > 0 ? (rest[i * 3] - cur[i * 3]) * 10 * edgeX : 0
       for (let k = 0; k < 3; k++) {
         const j = i * 3 + k
-        const a = k === 0 ? fx : k === 1 ? fy + GRAVITY + lift : fz
+        const a = k === 0 ? fx + hemX : k === 1 ? fy + GRAVITY + lift + hemY : fz
         const v = (cur[j] - prev[j]) * DAMPING
         prev[j] = cur[j]
         cur[j] = cur[j] + v + a * DT * DT
@@ -360,12 +369,17 @@ onMounted(() => {
   canvas.classList.add('woven-cloth-canvas')
   host.appendChild(canvas)
 
-  // 光照沿用源码：暖白环境光 + 暖主光 + 绛红轮廓光
-  scene.add(new THREE.AmbientLight(0xffe9d0, 0.62))
+  // 光照沿用源码（暖白环境光 + 暖主光 + 绛红轮廓光），另加正面补光：
+  // 源码布面是短横幅，竖幅长布下段会整体背光发黑、读作平板，补光把全幅拉回均匀亮象牙，
+  // 褶皱改由主光的柔和阴影呈现
+  scene.add(new THREE.AmbientLight(0xffe9d0, 0.78))
   const key = new THREE.DirectionalLight(0xfff0dc, 1.15)
   key.position.set(-3, 3.5, 3.2)
   scene.add(key)
-  const rim = new THREE.DirectionalLight(0xb02330, 0.42)
+  const fill = new THREE.DirectionalLight(0xfff4e2, 0.45)
+  fill.position.set(0, 0, 5)
+  scene.add(fill)
+  const rim = new THREE.DirectionalLight(0xb02330, 0.35)
   rim.position.set(3, -1.5, 2.0)
   scene.add(rim)
 

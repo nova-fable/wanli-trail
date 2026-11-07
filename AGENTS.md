@@ -192,6 +192,7 @@ armyVisible 隐藏。方案：目标挑选与回退均加 armyVisible 过滤。
 本地提交前跑同一套：
 
 ```bash
+npm test
 npm run build
 ```
 

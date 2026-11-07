@@ -370,6 +370,13 @@ onMounted(() => {
     event.preventDefault()
     stop()
   })
+  host.addEventListener('webglcontextrestored', () => {
+    // three 侧已在 canvas 上自恢复 GL 上下文并重建资源，组件只负责恢复渲染：
+    // 不重启循环的话布面会永久冻结在丢上下文前的最后一帧
+    if (!renderer || disposed) return
+    if (reduceMotion()) renderer.render(scene, camera)
+    else start()
+  })
 })
 
 // 折叠后再展开：容器尺寸变了，ResizeObserver 会负责重建；这里只保证帧循环恢复

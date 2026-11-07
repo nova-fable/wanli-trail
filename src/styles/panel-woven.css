@@ -1,6 +1,7 @@
 /* panel-woven.css · 3D 地形设置面板的织布底板宿主 + 可读性层
-   布料本身（纹理、绲边、飘动）由 effects/woven-cloth/WovenCloth.vue 的 three.js 场景实时渲染，
-   本分片不画任何布面纹样，只负责：给画布一个裁切容器、让压在布上的文字保持可读。 */
+   布料本身（纹理、绲边、涟漪）由 effects/woven-cloth/WovenCloth.vue 的 three.js 场景实时渲染，
+   本分片不画任何布面纹样，只负责：给画布一个裁切容器、让压在布上的文字保持可读、
+   驱动整块面板（正文 + 布面画布一体）的 woven-sway 风摆。 */
 
 .terrain3d {
   --woven-hem: #a5202c;
@@ -23,6 +24,14 @@
   padding: 0;
   border: 0;
   border-radius: 3px;
+  /* 整板风摆：面板作为一块布、上缘钉住随风摆动，正文与布面画布一起动。
+     幅度按 382×624 面板验算：rotate ±0.95° 下缘横移约 12px，低于 0.3° 时角点
+     位移不足 2px、肉眼不可见；skew 只保留旋转权重的四分之一，避免与 rotate
+     反向后相互抵消；周期 7.4s，相位不对称避免节拍感。
+     布面网格只画行波涟漪（WovenCloth 风场无横向均匀分量），不与本摆动叠加。 */
+  transform-origin: 50% 50%;
+  animation: woven-sway 7.4s ease-in-out infinite;
+  will-change: transform;
   background:
     repeating-linear-gradient(0deg, rgba(60, 30, 20, 0.05) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(255, 250, 235, 0.06) 0 1px, transparent 1px 3px),
@@ -46,6 +55,17 @@
   display: block;
   width: 100%;
   height: 100%;
+}
+
+@keyframes woven-sway {
+  0%, 100% { transform: rotate(0deg) skewX(0deg); }
+  22% { transform: rotate(0.95deg) skewX(-0.3deg); }
+  46% { transform: rotate(0.26deg) skewX(-0.08deg); }
+  68% { transform: rotate(-0.82deg) skewX(0.26deg); }
+  86% { transform: rotate(-0.22deg) skewX(0.07deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terrain3d-tools { animation: none; }
 }
 
 /* 可读性层：3D 光照会让布面压暗、发褐，单靠布面本色不足以承托正文。

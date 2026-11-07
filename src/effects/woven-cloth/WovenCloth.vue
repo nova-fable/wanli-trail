@@ -134,22 +134,23 @@ function makeClothTexture(aspect) {
 }
 
 /**
- * 风力场：与源码同构（顺风传播 + 阵风包络 + 横向摆动），幅度按面板用途收小。
- * 源作用在整屏大画布上，WIND_SCALE 压到 0.32 后褶皱可见但不会把面板文字推向暗侧；
- * 下摆用 FLOOR_Y 托住，防止布料在长面板里坠成尖锥、两侧露底。
+ * 风力场：只承担行波涟漪（布面的非刚性细节）。整幅低频摆动由 .terrain3d-tools 的
+ * woven-sway（panel-woven.css）承担——这里不得保留与 cx 无关的横向均匀分量，
+ * 否则网格摆动会与面板风摆叠加成二倍摆，绲边脱离面板边缘。
+ * 幅度按 380×622 面板验算：下摆散布 ±9px、布面 ±6px、逐帧位移 <0.5px、兜底不触发。
  */
-const WIND_SCALE = 0.32
+const RIPPLE_SCALE = 0.6
 let floorY = -0.62
 
 function wind(ix, iy, t) {
   const cx = ix / GRID_X
   const cy = iy / GRID_Y
-  const travel = t * 1.7 - cy * 4.2
   const gust = 0.6 + 0.42 * Math.sin(t * 0.6) + 0.18 * Math.sin(t * 1.9 + 1.3)
-  const amp = 4.3 * cy * WIND_SCALE
-  const fz = (Math.sin(travel + cx * 3.3) + 0.5 * Math.sin(travel * 1.7 + cx * 6.0)) * amp * gust
-  const fx = Math.sin(t * 0.9 + cy * 2.2) * 0.6 * cy * WIND_SCALE
-  const fy = -0.4 * cy
+  const travel = t * 5.2 - cy * 6.0
+  const amp = 2.6 * (0.25 + 0.75 * cy) * RIPPLE_SCALE
+  const fz = (Math.sin(travel + cx * 7.5) + 0.45 * Math.sin(travel * 1.61 + cx * 12.0 + 1.1)) * amp * gust
+  const fx = Math.sin(t * 2.6 + cx * 5.3 + cy * 3.1) * 0.35 * cy * RIPPLE_SCALE * gust
+  const fy = -0.15 * cy
   return [fx, fy, fz]
 }
 
